@@ -1,0 +1,22 @@
+{
+  "strict": false,
+  "include": ["./src"],
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "removeComments": true,
+    "skipLibCheck": true,
+    "composite": true,
+    "declaration": true,
+    "module": "ES2015",
+    "resolveJsonModule": true,
+    "target": "es2015",
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react",
+    "allowJs": true,
+    "baseUrl": "./src",
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "downlevelIteration": true,
+  },
+}
