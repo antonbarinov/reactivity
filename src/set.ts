@@ -36,6 +36,7 @@ export function setObservableMapSet(target, type: 'set' | 'map') {
         subscribers: new Set(),
     };
 
+    // Fill initial values
     mapSetPrototypes[`${type}__forEach`].call(target, (v, k) => {
         const rv = registerMapSetReactiveVar(reactiveVariable, k, type);
         if (type === 'set') {

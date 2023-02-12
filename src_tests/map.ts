@@ -1,6 +1,8 @@
 import { autorun, reactive } from '../src';
 import { sleep } from './helpers';
 
+const obj1 = { a: 1 };
+const obj2 = { a: 2 };
 
 class Test {
     set = new Set();
@@ -13,8 +15,6 @@ class Test {
 
 const test = new Test();
 
-const obj1 = { a: 1 };
-const obj2 = { a: 2 };
 
 autorun(() => {
     console.log('map get obj1', test.map.get(obj1));
