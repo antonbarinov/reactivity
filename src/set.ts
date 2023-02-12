@@ -22,7 +22,7 @@ const mapSetPrototypes = {
     'map__has': Map.prototype.has,
 }
 
-export function setObservableMapSet(target, type = 'set') {
+export function setObservableMapSet(target, type: 'set' | 'map') {
     let size = target.size;
 
     const reactiveVariable: IReactiveVariable = {
@@ -44,7 +44,7 @@ export function setObservableMapSet(target, type = 'set') {
     // Only SET specified
     target.add = function (value) {
         const valueExist = mapSetPrototypes[`${type}__has`].apply(this, arguments);
-        const rv = registerMapSetReactiveVar(reactiveVariable, value);
+        const rv = registerMapSetReactiveVar(reactiveVariable, value, type);
         rv.value = true;
 
         // Data changed
@@ -60,8 +60,8 @@ export function setObservableMapSet(target, type = 'set') {
     // Only MAP specified
     target.set = function (key, value) {
         const valueExist = mapSetPrototypes[`${type}__has`].apply(this, [key]);
-        const rv = registerMapSetReactiveVar(reactiveVariable, key);
-        rv.value = true;
+        const rv = registerMapSetReactiveVar(reactiveVariable, key, type);
+        rv.value = value;
 
         const prevValue = mapSetPrototypes[`${type}__get`].apply(this, [key]);
 
@@ -82,7 +82,7 @@ export function setObservableMapSet(target, type = 'set') {
 
     // Only MAP specified
     target.get = function (key) {
-        const rv = registerMapSetReactiveVar(reactiveVariable, key);
+        const rv = registerMapSetReactiveVar(reactiveVariable, key, type);
         subscribe(rv);
 
         return mapSetPrototypes[`${type}__get`].apply(this, arguments);
@@ -115,14 +115,14 @@ export function setObservableMapSet(target, type = 'set') {
 
             dataChanged(reactiveVariable);
 
-            const rv = registerMapSetReactiveVar(reactiveVariable, value);
+            const rv = registerMapSetReactiveVar(reactiveVariable, value, type);
             rv.value = false;
             dataChanged(rv);
         }
     };
 
     target.has = function (key) {
-        const rv = registerMapSetReactiveVar(reactiveVariable, key);
+        const rv = registerMapSetReactiveVar(reactiveVariable, key, type);
         subscribe(rv);
 
         const has = mapSetPrototypes[`${type}__has`].apply(this, arguments);
@@ -152,12 +152,15 @@ export function setObservableMapSet(target, type = 'set') {
 }
 
 
-function registerMapSetReactiveVar(reactiveVariable: IReactiveVariable, key: string | object) {
+function registerMapSetReactiveVar(reactiveVariable: IReactiveVariable, key: string | object, type: 'set' | 'map') {
     let registered = reactiveVariable.mapSetVars.get(key);
     if (!registered) {
+        let initVal = undefined;
+        if (type === 'set') initVal = false;
+
         registered = {
-            value: false,
-            prevValue: false,
+            value: initVal,
+            prevValue: initVal,
             subscribers: new Set(),
         }
         reactiveVariable.mapSetVars.set(key, registered);

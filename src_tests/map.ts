@@ -1,4 +1,5 @@
 import { autorun, reactive } from '../src';
+import { sleep } from './helpers';
 
 
 class Test {
@@ -23,8 +24,13 @@ autorun(() => {
     console.log('map size', test.map.size);
 });
 
-test.map.set(obj2, '1');
-test.map.set(obj2, '2');
-test.map.set(obj1, '1');
-test.map.set(obj1, '2');
-test.map.set(obj1, '3');
+(async () => {
+    test.map.set(obj2, '1');
+    test.map.set(obj2, '2');
+    test.map.set(obj1, '1');
+    await sleep(1);
+    test.map.set(obj1, '2');
+    await sleep(1);
+    test.map.set(obj1, '3');
+})();
+
