@@ -1,16 +1,16 @@
-interface EnhFunction extends Function {
-    __subscribedTo: Set<IReactiveVariable>;
-    __isAutorun: boolean;
-}
+import {
+    subscribe,
+    pushReaction,
+    reactiveVariablesChangedQueue,
+    executeSYNCSingleReactiveVariable,
+    executeReactiveVariables,
+    watchersCheck,
+    getReactiveVariable,
+    IReactiveVariable,
+    EnhFunction, getSetReactiveVariable, dataChanged,
+} from './internatl';
 
-interface IReactiveVariable {
-    value: any;
-    prevValue: any;
-    subscribers: Set<Function>;
-    dependenciesChanged?: boolean;
-    watchers?: Set<IReactiveVariable>;
-    syncReactions?: boolean;
-}
+import { setObservableMapSet } from './set';
 
 class ReactiveSubscribe {
     effects: EnhFunction[] = [];
@@ -38,16 +38,7 @@ class ReactiveSubscribe {
     }
 }
 
-const reactiveVariablesWeakMap = new WeakMap<object, Map<string, IReactiveVariable>>();
-function getReactiveVariable<T extends object, K extends keyof T>(target: T, key: K) {
-    const reactiveTargetMap = reactiveVariablesWeakMap.get(target);
-    if (!reactiveTargetMap) return  null;
-
-    return  reactiveTargetMap.get(key as string);
-}
-
 export const reactiveSubscribe = new ReactiveSubscribe();
-const reactiveVariablesChangedQueue = new Set<IReactiveVariable>();
 
 // Sync reactions
 export function markSynchronousReactions<T extends object, K extends keyof T>(target: T, key: K | K[]) {
@@ -65,18 +56,21 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
     const descriptor = Object.getOwnPropertyDescriptor(target, key);
     if (descriptor.set) return false;
 
+    if (value instanceof Map) {
+        return setObservableMapSet(value, 'map');
+    } else if (value instanceof Set) {
+        return setObservableMapSet(value, 'set');
+    } else if (value instanceof WeakMap || value instanceof WeakSet) {
+        return false;
+    }
+
     const reactiveVariable: IReactiveVariable = {
         value,
         prevValue: value,
         subscribers: new Set(),
     };
 
-    let reactiveTargetMap = reactiveVariablesWeakMap.get(target);
-    if (!reactiveTargetMap) {
-        reactiveTargetMap = new Map();
-        reactiveVariablesWeakMap.set(target, reactiveTargetMap);
-    }
-    reactiveTargetMap.set(key, reactiveVariable);
+    getSetReactiveVariable(target, key, reactiveVariable);
 
     /**
      * Computed - BEGIN
@@ -134,14 +128,7 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
             if (isDataChanged) {
                 reactiveVariable.value = v;
 
-                // Computed functions watchers
-                watchersCheck(reactiveVariable);
-
-                if (reactiveSubscribe.syncMode || reactiveVariable.syncReactions) {
-                    executeSYNCSingleReactiveVariable(reactiveVariable);
-                } else {
-                    pushReaction(reactiveVariable);
-                }
+                dataChanged(reactiveVariable);
             }
         },
         enumerable: true,
@@ -150,40 +137,6 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
 }
 const alreadyReactive = new WeakSet();
 
-function watchersCheck(reactiveVariable: IReactiveVariable) {
-    function check(r: IReactiveVariable) {
-        r?.watchers?.forEach((dep) => {
-            dep.dependenciesChanged = true;
-            pushReaction(dep);
-            check(dep);
-        });
-    }
-
-    check(reactiveVariable);
-}
-
-
-function subscribe(reactiveVariable: IReactiveVariable) {
-    const effectFn = reactiveSubscribe.currentEffect;
-    if (effectFn && !reactiveVariable.subscribers.has(effectFn)) {
-        if (effectFn.__subscribedTo === undefined) {
-            effectFn.__subscribedTo = new Set();
-        }
-    }
-    if (effectFn) {
-        reactiveVariable.subscribers.add(effectFn);
-        effectFn.__subscribedTo.add(reactiveVariable);
-    }
-
-    if (reactiveSubscribe.dependencies.length) {
-        if (!reactiveVariable.watchers) reactiveVariable.watchers = new Set<IReactiveVariable>();
-        for (const dep of reactiveSubscribe.dependencies) {
-            reactiveVariable.watchers.add(dep);
-        }
-    }
-
-    return effectFn;
-}
 
 export function reactive<T extends object, K extends keyof T>(target: T, annotations?: K[], ignore?: boolean) {
     if (alreadyReactive.has(target)) return target;
@@ -308,39 +261,6 @@ export function when(fn: () => boolean) {
     return promise;
 }
 
-function pushReaction(reactiveVariable: IReactiveVariable) {
-    reactiveVariablesChangedQueue.add(reactiveVariable);
-}
-
 setInterval(executeReactiveVariables);
 
-const effectsToExec = new Set<Function>();
-function executeReactiveVariables() {
-    reactiveVariablesChangedQueue.forEach((reactiveVariable) => {
-        // Run effect only if value really change after auto batching time (setInterval(executeReactiveVariables))
-        if (reactiveVariable.prevValue !== reactiveVariable.value) {
-            reactiveVariable.subscribers.forEach((effectFn) => {
-                effectsToExec.add(effectFn);
-            });
 
-            reactiveVariable.prevValue = reactiveVariable.value;
-        }
-    });
-
-    effectsToExec.forEach((fn) => fn());
-
-    reactiveVariablesChangedQueue.clear();
-    effectsToExec.clear();
-}
-
-function executeSYNCSingleReactiveVariable(reactiveVariable: IReactiveVariable) {
-    reactiveVariable.subscribers.forEach((effectFn) => {
-        effectsToExec.add(effectFn);
-    });
-
-    // Remove from async auto batch queue because sync reaction right now
-    reactiveVariablesChangedQueue.delete(reactiveVariable);
-
-    effectsToExec.forEach((fn) => fn());
-    effectsToExec.clear();
-}

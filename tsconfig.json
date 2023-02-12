@@ -1,6 +1,6 @@
 {
   "strict": false,
-  "include": ["./src"],
+  "include": ["./src", "./src_tests"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "removeComments": true,

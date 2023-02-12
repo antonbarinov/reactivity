@@ -2,16 +2,9 @@ import { Alias, defineConfig, splitVendorChunkPlugin, UserConfig } from 'vite';
 import * as path from 'path';
 import fs from 'fs';
 
-
 import packageJson from './package.json';
 
-
 process.env.NODE_ENV ??= 'development';
-
-let assetFileNamesPrefix = 'assets';
-if (process.env.NODE_ENV === 'production') {
-    //assetFileNamesPrefix = 'assets';
-}
 
 const config = defineConfig(({ command, mode, ssrBuild }) => ({
     build: {
@@ -21,7 +14,6 @@ const config = defineConfig(({ command, mode, ssrBuild }) => ({
                 './src/index.ts',
                 './src/react.ts'
             ],
-            //formats: ['es', 'cjs'],
         },
         rollupOptions: {
             external: ['react'],
