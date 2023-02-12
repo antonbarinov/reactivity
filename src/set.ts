@@ -46,14 +46,12 @@ export function setObservableMapSet(target, type = 'set') {
     target.add = function (value) {
         const valueExist = mapSetPrototypes[`${type}__has`].apply(this, arguments);
         const rv = registerMapSetReactiveVar(reactiveVariable, value);
-        //rv.prevValue = valueExist;
         rv.value = true;
 
         // Data changed
         if (!valueExist) {
             mapSetPrototypes[`${type}__add`].apply(this, arguments);
             size++;
-            //reactiveVariable.value++;
             someChanges(reactiveVariable);
 
             dataChanged(reactiveVariable);
@@ -65,14 +63,13 @@ export function setObservableMapSet(target, type = 'set') {
     target.set = function (key, value) {
         const valueExist = mapSetPrototypes[`${type}__has`].apply(this, [key]);
         const rv = registerMapSetReactiveVar(reactiveVariable, value);
-        //rv.prevValue = valueExist;
         rv.value = true;
 
         // Data changed
         if (!valueExist) {
             mapSetPrototypes[`${type}__set`].apply(this, arguments);
             size++;
-            //reactiveVariable.value++;
+
             someChanges(reactiveVariable);
 
             dataChanged(reactiveVariable);
@@ -126,7 +123,6 @@ export function setObservableMapSet(target, type = 'set') {
         subscribe(rv);
 
         const has = mapSetPrototypes[`${type}__has`].apply(this, arguments);
-        //rv.prevValue = has;
 
         return has;
     };
