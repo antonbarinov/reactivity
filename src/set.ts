@@ -23,8 +23,6 @@ const mapSetPrototypes = {
 }
 
 export function setObservableMapSet(target, type: 'set' | 'map') {
-    let size = target.size;
-
     const reactiveVariable: IReactiveVariable = {
         value: false,
         prevValue: false,
@@ -32,10 +30,25 @@ export function setObservableMapSet(target, type: 'set' | 'map') {
         mapSetVars: new Map(),
     };
 
+    const reactiveVariablesSize: IReactiveVariable = {
+        value: target.size,
+        prevValue: target.size,
+        subscribers: new Set(),
+    };
+
+    mapSetPrototypes[`${type}__forEach`].call(target, (v, k) => {
+        const rv = registerMapSetReactiveVar(reactiveVariable, k, type);
+        if (type === 'set') {
+            rv.value = true;
+        } else {
+            rv.value = v;
+        }
+    });
+
     Object.defineProperty(target, 'size', {
         get() {
-            subscribe(reactiveVariable);
-            return size;
+            subscribe(reactiveVariablesSize);
+            return reactiveVariablesSize.value;
         },
         enumerable: false,
         configurable: true,
@@ -50,7 +63,9 @@ export function setObservableMapSet(target, type: 'set' | 'map') {
         // Data changed
         if (!valueExist) {
             mapSetPrototypes[`${type}__add`].apply(this, arguments);
-            size++;
+
+            reactiveVariablesSize.value++;
+            dataChanged(reactiveVariablesSize);
 
             dataChanged(reactiveVariable);
             dataChanged(rv);
@@ -70,7 +85,8 @@ export function setObservableMapSet(target, type: 'set' | 'map') {
         const changed = !valueExist || (prevValue !== value);
 
         if (!valueExist) {
-            size++;
+            reactiveVariablesSize.value++;
+            dataChanged(reactiveVariablesSize);
         }
 
         // Data changed
@@ -93,8 +109,8 @@ export function setObservableMapSet(target, type: 'set' | 'map') {
         mapSetPrototypes[`${type}__clear`].apply(this, arguments);
         // Data changed
         if (prevKeysLen > 0) {
-            size = 0;
-            reactiveVariable.value = !reactiveVariable.value;
+            reactiveVariablesSize.value = 0;
+            dataChanged(reactiveVariablesSize);
 
             dataChanged(reactiveVariable);
 
@@ -110,8 +126,9 @@ export function setObservableMapSet(target, type: 'set' | 'map') {
         // Data changed
         if (valueExist) {
             mapSetPrototypes[`${type}__delete`].apply(this, arguments);
-            size--;
-            reactiveVariable.value = !reactiveVariable.value;
+
+            reactiveVariablesSize.value--;
+            dataChanged(reactiveVariablesSize);
 
             dataChanged(reactiveVariable);
 
@@ -125,9 +142,7 @@ export function setObservableMapSet(target, type: 'set' | 'map') {
         const rv = registerMapSetReactiveVar(reactiveVariable, key, type);
         subscribe(rv);
 
-        const has = mapSetPrototypes[`${type}__has`].apply(this, arguments);
-
-        return has;
+        return mapSetPrototypes[`${type}__has`].apply(this, arguments);
     };
 
     target.entries = function () {

@@ -1,5 +1,7 @@
 import { autorun, reactive } from '../src';
 
+const obj1 = { a: 1 };
+const obj2 = { a: 2 };
 
 class Test {
     set = new Set();
@@ -12,8 +14,7 @@ class Test {
 
 const test = new Test();
 
-const obj1 = { a: 1 };
-const obj2 = { a: 2 };
+
 
 autorun(() => {
     console.log('set has obj1', test.set.has(obj1));
