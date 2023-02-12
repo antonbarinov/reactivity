@@ -27,3 +27,4 @@ test.map.set(obj2, '1');
 test.map.set(obj2, '2');
 test.map.set(obj1, '1');
 test.map.set(obj1, '2');
+test.map.set(obj1, '3');
