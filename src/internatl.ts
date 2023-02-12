@@ -78,13 +78,19 @@ const effectsToExec = new Set<Function>();
 export function executeReactiveVariables() {
     reactiveVariablesChangedQueue.forEach((reactiveVariable) => {
         // Run effect only if value really change after auto batching time (setInterval(executeReactiveVariables))
-        if (reactiveVariable.prevValue !== reactiveVariable.value) {
-            reactiveVariable.subscribers.forEach((effectFn) => {
-                effectsToExec.add(effectFn);
-            });
-
-            reactiveVariable.prevValue = reactiveVariable.value;
+        if (reactiveVariable.mapSetVars) {
+            if (!someChanges(reactiveVariable)) {
+                return false;
+            }
+        } else if (reactiveVariable.prevValue === reactiveVariable.value) {
+            return false;
         }
+
+        reactiveVariable.subscribers.forEach((effectFn) => {
+            effectsToExec.add(effectFn);
+        });
+
+        reactiveVariable.prevValue = reactiveVariable.value;
     });
 
     effectsToExec.forEach((fn) => fn());
@@ -114,4 +120,14 @@ export function dataChanged(reactiveVariable: IReactiveVariable) {
     } else {
         pushReaction(reactiveVariable);
     }
+}
+
+
+function someChanges(reactiveVariable: IReactiveVariable) {
+    let hasChanges = false;
+    reactiveVariable.mapSetVars.forEach((rv) => {
+        if (rv.prevValue !== rv.value) hasChanges = true;
+    });
+
+    return hasChanges;
 }
