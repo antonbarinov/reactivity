@@ -27,8 +27,8 @@ export function setObservableMapSet(target, type = 'set') {
     let size = target.size;
 
     const reactiveVariable: IReactiveVariable = {
-        value: 1,
-        prevValue: 1,
+        value: false,
+        prevValue: false,
         subscribers: new Set(),
         mapSetVars: new Map(),
     };
@@ -53,7 +53,8 @@ export function setObservableMapSet(target, type = 'set') {
         if (!valueExist) {
             mapSetPrototypes[`${type}__add`].apply(this, arguments);
             size++;
-            reactiveVariable.value++;
+            //reactiveVariable.value++;
+            someChanges(reactiveVariable);
 
             dataChanged(reactiveVariable);
             dataChanged(rv);
@@ -71,7 +72,8 @@ export function setObservableMapSet(target, type = 'set') {
         if (!valueExist) {
             mapSetPrototypes[`${type}__set`].apply(this, arguments);
             size++;
-            reactiveVariable.value++;
+            //reactiveVariable.value++;
+            someChanges(reactiveVariable);
 
             dataChanged(reactiveVariable);
             dataChanged(rv);
@@ -92,7 +94,7 @@ export function setObservableMapSet(target, type = 'set') {
         // Data changed
         if (prevKeysLen > 0) {
             size = 0;
-            reactiveVariable.value++;
+            reactiveVariable.value = !reactiveVariable.value;
 
             dataChanged(reactiveVariable);
 
@@ -109,7 +111,7 @@ export function setObservableMapSet(target, type = 'set') {
         if (valueExist) {
             mapSetPrototypes[`${type}__delete`].apply(this, arguments);
             size--;
-            reactiveVariable.value++;
+            reactiveVariable.value = !reactiveVariable.value;
 
             dataChanged(reactiveVariable);
 
@@ -163,4 +165,17 @@ function registerMapSetReactiveVar(reactiveVariable: IReactiveVariable, key: str
     }
 
     return registered;
+}
+
+function someChanges(reactiveVariable: IReactiveVariable) {
+    let hasChanges = false;
+    reactiveVariable.mapSetVars.forEach((rv) => {
+        if (rv.prevValue !== rv.value) hasChanges = true;
+    });
+
+    if (hasChanges) {
+        reactiveVariable.value = !reactiveVariable.value;
+    }
+
+    return hasChanges;
 }
