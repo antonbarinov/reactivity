@@ -1,13 +1,11 @@
 import {
     subscribe,
-    pushReaction,
-    reactiveVariablesChangedQueue,
-    executeSYNCSingleReactiveVariable,
     executeReactiveVariables,
-    watchersCheck,
     getReactiveVariable,
     IReactiveVariable,
-    EnhFunction, getSetReactiveVariable, dataChanged,
+    EnhFunction,
+    getSetReactiveVariable,
+    dataChanged,
 } from './internatl';
 
 import { setObservableMapSet } from './set';

@@ -30,4 +30,8 @@ test.set.delete(obj2);
 test.set.delete(obj1);
 
 test.set.add(obj1);
-test.set.delete(obj1);
+test.set.clear();
+test.set.add(obj1);
+test.set.add(obj1);
+test.set.add(obj1);
+test.set.clear();
