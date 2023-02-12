@@ -1,7 +1,6 @@
-// Prototypes links Set
-import {  } from './index';
 import { subscribe, IReactiveVariable, dataChanged } from './internatl';
 
+// Prototypes links for Set and Map
 const mapSetPrototypes = {
     'set__add': Set.prototype.add,
     'set__clear': Set.prototype.clear,
