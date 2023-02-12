@@ -60,16 +60,22 @@ export function setObservableMapSet(target, type = 'set') {
 
     // Only MAP specified
     target.set = function (key, value) {
-        let valueExist = mapSetPrototypes[`${type}__has`].apply(this, [key]);
+        const valueExist = mapSetPrototypes[`${type}__has`].apply(this, [key]);
         const rv = registerMapSetReactiveVar(reactiveVariable, key);
         rv.value = true;
 
+        const prevValue = mapSetPrototypes[`${type}__get`].apply(this, [key]);
+
         mapSetPrototypes[`${type}__set`].apply(this, arguments);
 
-        // Data changed
+        const changed = !valueExist || (prevValue !== value);
+
         if (!valueExist) {
             size++;
+        }
 
+        // Data changed
+        if (changed) {
             dataChanged(reactiveVariable);
             dataChanged(rv);
         }
