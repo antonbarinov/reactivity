@@ -1,4 +1,4 @@
-import { subscribe, IReactiveVariable, dataChanged } from './internatl';
+import { subscribe, IReactiveVariable, dataChanged } from './internal';
 
 // Prototypes links for Set and Map
 const mapSetPrototypes = {

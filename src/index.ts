@@ -6,7 +6,7 @@ import {
     EnhFunction,
     getSetReactiveVariable,
     dataChanged,
-} from './internatl';
+} from './internal';
 
 import { setObservableMapSet } from './set';
 

@@ -32,5 +32,6 @@ autorun(() => {
     test.map.set(obj1, '2');
     await sleep(1);
     test.map.set(obj1, '3');
+    test.map.clear();
 })();
 
