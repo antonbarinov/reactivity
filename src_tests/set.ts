@@ -5,7 +5,6 @@ const obj2 = { a: 2 };
 
 class Test {
     set = new Set();
-    map = new Map();
 
     constructor() {
         reactive(this);
