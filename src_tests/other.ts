@@ -1,5 +1,5 @@
 import { autorun, reaction, reactive, when } from '../src';
-import { sleep } from '../src_tests/helpers';
+import { sleep } from './helpers';
 
 
 
