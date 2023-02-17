@@ -120,10 +120,7 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
 
             // Circular dependency check
             if (effectFn && effectFn.__subscribedTo?.has(reactiveVariable)) {
-                let problemFnBody = effectFn;
-                if (effectFn.__isAutorun) {
-                    problemFnBody = effectFn.__autorunBody;
-                }
+                let problemFnBody = effectFn.__effectBody || effectFn;
 
                 disposeEffect(effectFn);
                 console.error(
@@ -243,6 +240,7 @@ export function reaction(trackFn: Function, effectFn: (disposeFn: Function) => a
     function effect() {
         effectFn(r.dispose);
     }
+    effect.__effectBody = effectFn;
 
     r.track(trackFn);
     if (execNow) effect();
@@ -256,8 +254,7 @@ export function autorun(fn: (disposeFn: Function) => any) {
         fn(dispose);
         reactiveSubscribe.stop();
     }
-    effect.__autorunBody = fn;
-    effect.__isAutorun = true;
+    effect.__effectBody = fn;
 
     effect();
 

@@ -2,8 +2,7 @@ import { reactiveSubscribe } from './index';
 
 export interface EnhFunction extends Function {
     __subscribedTo: Set<IReactiveVariable>;
-    __isAutorun: boolean;
-    __autorunBody: EnhFunction;
+    __effectBody: EnhFunction;
 }
 
 export interface IReactiveVariable {
