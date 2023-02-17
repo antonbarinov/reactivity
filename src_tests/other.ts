@@ -20,14 +20,10 @@ const disp1 = reaction(() => test.counter, (disposeFn) => {
     }
 });
 
+// Circular dependency
 const disp2 = reaction(() => test.counter, () => {
     console.log('reaction #2', test.counter);
     test.counter++;
-    /*
-    setTimeout(() => {
-        test.counter++;
-        test.counter++;
-    });*/
 });
 
 reaction(() => test.counter, (disposeFn) => {
@@ -36,6 +32,7 @@ reaction(() => test.counter, (disposeFn) => {
     }
 });
 
+// Circular dependency
 autorun(() => {
     console.log('autorun #1', test.counter);
     test.counter++;
