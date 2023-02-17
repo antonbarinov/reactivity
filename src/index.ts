@@ -237,18 +237,23 @@ export function createReaction(effectFn: Function) {
     };
 }
 
-export function reaction(trackFn: Function, effectFn: Function, execNow = false) {
-    const r = createReaction(effectFn);
+export function reaction(trackFn: Function, effectFn: (disposeFn: Function) => any, execNow = false) {
+    const r = createReaction(effect);
+
+    function effect() {
+        effectFn(r.dispose);
+    }
+
     r.track(trackFn);
-    if (execNow) effectFn();
+    if (execNow) effect();
 
     return r.dispose;
 }
 
-export function autorun(fn: Function) {
+export function autorun(fn: (disposeFn: Function) => any) {
     function effect() {
         reactiveSubscribe.start(effect);
-        fn();
+        fn(dispose);
         reactiveSubscribe.stop();
     }
     effect.__autorunBody = fn;

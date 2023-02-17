@@ -13,8 +13,11 @@ class Test {
 
 const test = new Test();
 
-const disp1 = reaction(() => test.counter, () => {
+const disp1 = reaction(() => test.counter, (disposeFn) => {
     console.log('reaction #1', test.counter);
+    if (test.counter > 5) {
+        disposeFn();
+    }
 });
 
 const disp2 = reaction(() => test.counter, () => {
@@ -27,9 +30,22 @@ const disp2 = reaction(() => test.counter, () => {
     });*/
 });
 
+reaction(() => test.counter, (disposeFn) => {
+    if (test.counter > 6) {
+        console.log('reaction #3', test.counter);
+    }
+});
+
 autorun(() => {
     console.log('autorun #1', test.counter);
     test.counter++;
+})
+
+autorun((disposeFn) => {
+    console.log('autorun #2', test.counter);
+    if (test.counter > 5) {
+        disposeFn();
+    }
 })
 
 //disp1();
