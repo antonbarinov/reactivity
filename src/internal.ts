@@ -3,12 +3,13 @@ import { reactiveSubscribe } from './index';
 export interface EnhFunction extends Function {
     __subscribedTo: Set<IReactiveVariable>;
     __isAutorun: boolean;
+    __autorunBody: EnhFunction;
 }
 
 export interface IReactiveVariable {
     value: any;
     prevValue: any;
-    subscribers: Set<Function>;
+    subscribers: Set<EnhFunction>;
     dependenciesChanged?: boolean;
     watchers?: Set<IReactiveVariable>;
     syncReactions?: boolean;
@@ -16,6 +17,8 @@ export interface IReactiveVariable {
 }
 
 export const reactiveVariablesChangedQueue = new Set<IReactiveVariable>();
+const effectsToExec = new Set<EnhFunction>();
+const reactiveVariablesWeakMap = new WeakMap<object, Map<string, IReactiveVariable>>();
 
 export function watchersCheck(reactiveVariable: IReactiveVariable) {
     function check(r: IReactiveVariable) {
@@ -33,7 +36,6 @@ export function pushReaction(reactiveVariable: IReactiveVariable) {
     reactiveVariablesChangedQueue.add(reactiveVariable);
 }
 
-const reactiveVariablesWeakMap = new WeakMap<object, Map<string, IReactiveVariable>>();
 export function getReactiveVariable<T extends object, K extends keyof T>(target: T, key: K) {
     const reactiveTargetMap = reactiveVariablesWeakMap.get(target);
     if (!reactiveTargetMap) return  null;
@@ -74,7 +76,6 @@ export function subscribe(reactiveVariable: IReactiveVariable) {
     return effectFn;
 }
 
-const effectsToExec = new Set<Function>();
 export function executeReactiveVariables() {
     reactiveVariablesChangedQueue.forEach((reactiveVariable) => {
         // Run effect only if value really change after auto batching time (setInterval(executeReactiveVariables))
@@ -93,10 +94,9 @@ export function executeReactiveVariables() {
         reactiveVariable.prevValue = reactiveVariable.value;
     });
 
-    effectsToExec.forEach((fn) => fn());
-
     reactiveVariablesChangedQueue.clear();
-    effectsToExec.clear();
+
+    executeEffects();
 }
 
 export function executeSYNCSingleReactiveVariable(reactiveVariable: IReactiveVariable) {
@@ -107,7 +107,20 @@ export function executeSYNCSingleReactiveVariable(reactiveVariable: IReactiveVar
     // Remove from async auto batch queue because sync reaction right now
     reactiveVariablesChangedQueue.delete(reactiveVariable);
 
-    effectsToExec.forEach((fn) => fn());
+    executeEffects();
+}
+
+function executeEffects() {
+    try {
+        effectsToExec.forEach((fn) => {
+            reactiveSubscribe.executedEffect = fn;
+            fn();
+        });
+    } catch (e) {
+        console.error(e);
+    }
+    reactiveSubscribe.executedEffect = null;
+
     effectsToExec.clear();
 }
 

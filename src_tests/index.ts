@@ -1,2 +1,3 @@
 //import './set';
-import './map';
+//import './map';
+import './other';

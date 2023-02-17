@@ -14,6 +14,8 @@ class ReactiveSubscribe {
     effects: EnhFunction[] = [];
     dependencies: IReactiveVariable[] = [];
     syncMode = false;
+    // Currently executed effect
+    executedEffect: EnhFunction = null;
 
     get currentEffect() {
         return this.effects.at(-1);
@@ -114,10 +116,19 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
             return reactiveVariable.value;
         },
         set(v) {
-            const effectFn = reactiveSubscribe.currentEffect;
-            if (effectFn && effectFn.__isAutorun && effectFn.__subscribedTo?.has(reactiveVariable)) {
-                console.error('circular change in autorun/reaction detected in', effectFn);
-                throw new Error(`circular change in autorun/reaction`);
+            const effectFn = reactiveSubscribe.currentEffect || reactiveSubscribe.executedEffect;
+
+            if (effectFn && effectFn.__subscribedTo?.has(reactiveVariable)) {
+                let problemFnBody = effectFn;
+                if (effectFn.__isAutorun) {
+                    problemFnBody = effectFn.__autorunBody;
+                }
+
+                disposeEffect(effectFn);
+                console.error('circular change reactions detected in:');
+                console.error(problemFnBody);
+                console.error('also effect ^ was disposed');
+                return false;
             }
 
             const prevValue = reactiveVariable.value;
@@ -223,8 +234,6 @@ export function createReaction(effectFn: Function) {
 }
 
 export function reaction(trackFn: Function, effectFn: Function, execNow = false) {
-    (effectFn as EnhFunction).__isAutorun = true;
-
     const r = createReaction(effectFn);
     r.track(trackFn);
     if (execNow) effectFn();
@@ -233,12 +242,14 @@ export function reaction(trackFn: Function, effectFn: Function, execNow = false)
 }
 
 export function autorun(fn: Function) {
-    (fn as EnhFunction).__isAutorun = true;
-    const effect = () => {
+    function effect() {
         reactiveSubscribe.start(effect);
         fn();
         reactiveSubscribe.stop();
     }
+    effect.__autorunBody = fn;
+    effect.__isAutorun = true;
+
     effect();
 
     function dispose() {
