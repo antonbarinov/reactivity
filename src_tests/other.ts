@@ -1,4 +1,5 @@
-import { autorun, reaction, reactive } from '../src';
+import { autorun, reaction, reactive, when } from '../src';
+import { sleep } from '../src_tests/helpers';
 
 
 
@@ -35,6 +36,16 @@ autorun(() => {
 
 test.counter++;
 test.counter++;
+
+(async () => {
+    await when(() => test.counter > 10);
+    console.log('text.counter > 10');
+})();
+
+(async () => {
+    await when(() => test.counter > 15);
+    console.log('text.counter > 15');
+})();
 
 setInterval(() => {
     test.counter++;
