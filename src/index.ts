@@ -118,6 +118,7 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
         set(v) {
             const effectFn = reactiveSubscribe.currentEffect || reactiveSubscribe.executedEffect;
 
+            // Circular dependency check
             if (effectFn && effectFn.__subscribedTo?.has(reactiveVariable)) {
                 let problemFnBody = effectFn;
                 if (effectFn.__isAutorun) {
@@ -125,9 +126,12 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
                 }
 
                 disposeEffect(effectFn);
-                console.error('circular change reactions detected in:');
-                console.error(problemFnBody);
-                console.error('also effect ^ was disposed');
+                console.error(
+                    'Circular dependency changes detected in:',
+                    '\r\n',
+                    problemFnBody,
+                    '\r\n',
+                    'Also this effect ^ was disposed');
                 return false;
             }
 
