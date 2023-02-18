@@ -47,6 +47,7 @@ autorun((disposeFn) => {
 
 //disp1();
 
+// also check auto batching
 test.counter++;
 test.counter++;
 
@@ -61,6 +62,8 @@ test.counter++;
 })();
 
 setInterval(() => {
+    // also check auto batching
+    test.counter++;
     test.counter++;
 }, 1000);
 
