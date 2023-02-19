@@ -20,9 +20,18 @@ const mapSetPrototypes = {
     'map__entries': Map.prototype.entries,
     'map__keys': Map.prototype.keys,
     'map__has': Map.prototype.has,
+
+    'weak_map__set': WeakMap.prototype.set,
+    'weak_map__get': WeakMap.prototype.get,
+    'weak_map__delete': WeakMap.prototype.delete,
+    'weak_map__has': WeakMap.prototype.has,
+
+    'weak_set__add': WeakSet.prototype.add,
+    'weak_set__delete': WeakSet.prototype.delete,
+    'weak_set__has': WeakSet.prototype.has,
 }
 
-export function setObservableMapSet(target, type: 'set' | 'map') {
+export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | 'weak_set') {
     const reactiveVariable: IReactiveVariable = {
         value: false,
         prevValue: false,
@@ -37,14 +46,16 @@ export function setObservableMapSet(target, type: 'set' | 'map') {
     };
 
     // Fill initial values
-    mapSetPrototypes[`${type}__forEach`].call(target, (v, k) => {
-        const rv = registerMapSetReactiveVar(reactiveVariable, k, type);
-        if (type === 'set') {
-            rv.value = true;
-        } else {
-            rv.value = v;
-        }
-    });
+    if (type == 'set' || type === 'map') {
+        mapSetPrototypes[`${type}__forEach`].call(target, (v, k) => {
+            const rv = registerMapSetReactiveVar(reactiveVariable, k, type);
+            if (type === 'set') {
+                rv.value = true;
+            } else {
+                rv.value = v;
+            }
+        });
+    }
 
     Object.defineProperty(target, 'size', {
         get() {
@@ -168,11 +179,11 @@ export function setObservableMapSet(target, type: 'set' | 'map') {
 }
 
 
-function registerMapSetReactiveVar(reactiveVariable: IReactiveVariable, key: string | object, type: 'set' | 'map') {
+function registerMapSetReactiveVar(reactiveVariable: IReactiveVariable, key: string | object, type: 'set' | 'map' | 'weak_map' | 'weak_set') {
     let registered = reactiveVariable.mapSetVars.get(key);
     if (!registered) {
         let initVal = undefined;
-        if (type === 'set') initVal = false;
+        if (type === 'set' || type === 'weak_set') initVal = false;
 
         registered = {
             value: initVal,

@@ -5,7 +5,7 @@ const obj1 = { a: 1 };
 const obj2 = { a: 2 };
 
 class Test {
-    map = new Map();
+    map = new WeakMap();
 
     constructor() {
         reactive(this);
@@ -20,7 +20,7 @@ autorun(() => {
 });
 
 autorun(() => {
-    console.log('map size', test.map.size);
+    console.log('map has obj2', test.map.has(obj2));
 });
 
 (async () => {
@@ -32,6 +32,5 @@ autorun(() => {
     test.map.set(obj1, '2');
     await sleep(1);
     test.map.set(obj1, '3');
-    test.map.clear();
 })();
 

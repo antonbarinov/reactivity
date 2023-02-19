@@ -60,8 +60,10 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
         return setObservableMapSet(value, 'map');
     } else if (value instanceof Set) {
         return setObservableMapSet(value, 'set');
-    } else if (value instanceof WeakMap || value instanceof WeakSet) {
-        return false;
+    } else if (value instanceof WeakMap) {
+        return setObservableMapSet(value, 'weak_map');
+    } else if (value instanceof WeakSet) {
+        return setObservableMapSet(value, 'weak_set');
     }
 
     const reactiveVariable: IReactiveVariable = {
