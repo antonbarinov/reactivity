@@ -3,6 +3,8 @@ import * as path from 'path';
 import fs from 'fs';
 
 import packageJson from './package.json';
+// @ts-ignore
+import { typingsGenerationPlugin } from './vite_plugins/types_declarations';
 
 process.env.NODE_ENV ??= 'development';
 
@@ -10,9 +12,10 @@ const config = defineConfig(({ command, mode, ssrBuild }) => ({
     build: {
         target: 'es2015',
         lib: {
+            //formats: ['es'],
             entry: [
                 './src/index.ts',
-                './src/react.ts'
+                './src/react_bindings.ts'
             ],
         },
         rollupOptions: {
@@ -27,7 +30,9 @@ const config = defineConfig(({ command, mode, ssrBuild }) => ({
     resolve: {
         alias: generateResolvers(),
     },
-    plugins: []
+    plugins: [
+        typingsGenerationPlugin(mode),
+    ]
 } as UserConfig));
 
 // https://vitejs.dev/config/
@@ -46,7 +51,7 @@ function generateResolvers() {
         }
         // Folder
         else {
-            if (packageJson.dependencies[item] === undefined) {
+            if (packageJson.dependencies && packageJson.dependencies[item] === undefined) {
                 resolvers.push({ find: item, replacement: path.resolve(srcDir, item) });
             }
         }
