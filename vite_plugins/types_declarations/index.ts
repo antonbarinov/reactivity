@@ -18,7 +18,7 @@ export function typingsGenerationPlugin(mode: string) {
                 baseUrl = config.base;
                 outDir = config.build.outDir;
             },
-            buildEnd: () => {
+            buildEnd() {
                 const typingsDir = `./${outDir}/__typings__`;
                 exec(`tsc --emitDeclarationOnly --outDir "${typingsDir}"`, (er, out, e) => {
                     fs.cpSync(`${typingsDir}/src`, `./${outDir}`, { recursive: true });
