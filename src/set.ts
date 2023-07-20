@@ -57,6 +57,8 @@ export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | '
         });
     }
 
+    target.__reactiveVariable = reactiveVariable;
+
     Object.defineProperty(target, 'size', {
         get() {
             subscribe(reactiveVariablesSize);
@@ -144,9 +146,9 @@ export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | '
 
             dataChanged(reactiveVariable);
 
-            const rv = registerMapSetReactiveVar(reactiveVariable, value, type);
-            rv.value = false;
-            dataChanged(rv);
+            //const rv = registerMapSetReactiveVar(reactiveVariable, value, type);
+            //rv.value = false;
+            //dataChanged(rv);
         }
     };
 
@@ -196,3 +198,11 @@ function registerMapSetReactiveVar(reactiveVariable: IReactiveVariable, key: str
     return registered;
 }
 
+const arrayFrom = Array.from;
+
+Array.from = function(arr) {
+    if (arr.__reactiveVariable) {
+        subscribe(arr.__reactiveVariable);
+    }
+    return arrayFrom(arr);
+}

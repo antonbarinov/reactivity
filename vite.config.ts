@@ -1,7 +1,8 @@
 import { Alias, defineConfig, splitVendorChunkPlugin, UserConfig } from 'vite';
 import * as path from 'path';
-import fs from 'fs';
+import * as fs from 'fs';
 
+// @ts-ignore
 import packageJson from './package.json';
 // @ts-ignore
 import { typingsGenerationPlugin } from './vite_plugins/types_declarations';
@@ -21,6 +22,9 @@ const config = defineConfig(({ command, mode, ssrBuild }) => ({
         rollupOptions: {
             external: ['react'],
         }
+    },
+    server: {
+        host: '0.0.0.0',
     },
 
     define: {
