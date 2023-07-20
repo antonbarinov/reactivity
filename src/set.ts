@@ -51,6 +51,7 @@ export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | '
             const rv = registerMapSetReactiveVar(reactiveVariable, k, type);
             if (type === 'set') {
                 rv.value = true;
+                rv.prevValue = true;
             } else {
                 rv.value = v;
             }
@@ -146,9 +147,9 @@ export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | '
 
             dataChanged(reactiveVariable);
 
-            //const rv = registerMapSetReactiveVar(reactiveVariable, value, type);
-            //rv.value = false;
-            //dataChanged(rv);
+            const rv = registerMapSetReactiveVar(reactiveVariable, value, type);
+            rv.value = false;
+            dataChanged(rv);
         }
     };
 
