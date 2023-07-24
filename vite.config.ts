@@ -13,7 +13,7 @@ const config = defineConfig(({ command, mode, ssrBuild }) => ({
     build: {
         target: 'es2015',
         lib: {
-            //formats: ['es'],
+            formats: ['cjs'],
             entry: [
                 './src/index.ts',
                 './src/react_bindings.ts'
