@@ -1,4 +1,3 @@
-import './polyfill';
 import {
     subscribe,
     executeReactiveVariables,
@@ -19,7 +18,7 @@ class ReactiveSubscribe {
     executedEffect: EnhFunction = null;
 
     get currentEffect() {
-        return this.effects.at(-1);
+        return this.effects[this.effects.length - 1];
     }
 
     start = (effectFn: Function) => {
