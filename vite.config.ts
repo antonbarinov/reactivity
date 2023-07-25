@@ -4,14 +4,13 @@ import * as fs from 'fs';
 
 // @ts-ignore
 import packageJson from './package.json';
-// @ts-ignore
 import { typingsGenerationPlugin } from './vite_plugins/types_declarations';
 
 process.env.NODE_ENV ??= 'development';
 
 const config = defineConfig(({ command, mode, ssrBuild }) => ({
     build: {
-        target: 'es2015',
+        target: 'es2018',
         lib: {
             formats: ['cjs'],
             entry: [
@@ -55,6 +54,7 @@ function generateResolvers() {
         }
         // Folder
         else {
+            // @ts-ignore
             if (packageJson.dependencies && packageJson.dependencies[item] === undefined) {
                 resolvers.push({ find: item, replacement: path.resolve(srcDir, item) });
             }
