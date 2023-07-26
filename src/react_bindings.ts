@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, memo } from 'react';
+import React, { useRef, useState, useEffect, memo } from 'react';
 import { createReaction } from './index';
 
 // Fix react crazy idea with freezing props, that cause bugs in some cases when using truly computed getter functions
@@ -13,7 +13,7 @@ function useForceUpdate() {
     return updateRef.current;
 }
 
-export function observer(baseComponent) {
+export function observer<P extends object>(baseComponent: React.FunctionComponent<P>) {
     const wrappedComponent = (...args) => {
         const forceUpdate = useForceUpdate();
         const reaction = useRef(null);
@@ -29,11 +29,11 @@ export function observer(baseComponent) {
 
         let output;
         reaction.current.track(() => {
-            output = baseComponent(...args);
+            output = baseComponent.apply({}, args);
         });
 
         return output;
     };
 
-    return memo(wrappedComponent);
+    return memo(wrappedComponent) as React.MemoExoticComponent<React.FunctionComponent<P>>;
 }

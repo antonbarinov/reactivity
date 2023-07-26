@@ -98,7 +98,7 @@ export function executeReactiveVariables() {
     executeEffects();
 }
 
-export function executeSYNCSingleReactiveVariable(reactiveVariable: IReactiveVariable) {
+export function executeSyncSingleReactiveVariable(reactiveVariable: IReactiveVariable) {
     reactiveVariable.subscribers.forEach((effectFn) => {
         effectsToExec.add(effectFn);
     });
@@ -128,7 +128,7 @@ export function dataChanged(reactiveVariable: IReactiveVariable) {
     watchersCheck(reactiveVariable);
 
     if (reactiveSubscribe.syncMode || reactiveVariable.syncReactions) {
-        executeSYNCSingleReactiveVariable(reactiveVariable);
+        executeSyncSingleReactiveVariable(reactiveVariable);
     } else {
         pushReaction(reactiveVariable);
     }
