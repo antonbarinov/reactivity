@@ -100,13 +100,13 @@ export function executeReactiveVariables() {
 
 export function executeSyncSingleReactiveVariable(reactiveVariable: IReactiveVariable) {
     reactiveVariable.subscribers.forEach((effectFn) => {
-        effectsToExec.add(effectFn);
+        reactiveSubscribe.executedEffect = effectFn;
+        effectFn();
+        reactiveSubscribe.executedEffect = null;
     });
 
     // Remove from async auto batch queue because sync reaction right now
     reactiveVariablesChangedQueue.delete(reactiveVariable);
-
-    executeEffects();
 }
 
 function executeEffects() {
@@ -114,6 +114,7 @@ function executeEffects() {
         effectsToExec.forEach((fn) => {
             reactiveSubscribe.executedEffect = fn;
             fn();
+            reactiveSubscribe.executedEffect = null;
         });
     } catch (e) {
         console.error(e);

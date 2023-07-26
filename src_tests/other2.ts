@@ -1,4 +1,4 @@
-import { autorun, reaction, reactive, when } from '../dist';
+import { autorun, reaction, reactive, when } from '../src';
 import { sleep } from './helpers';
 
 

@@ -1,5 +1,5 @@
 import { autorun, reactive } from '../src';
-import { sleep } from '../src_tests/helpers';
+import { sleep } from './helpers';
 
 const obj1 = { a: 1 };
 const obj2 = { a: 2 };
