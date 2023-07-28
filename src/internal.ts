@@ -77,12 +77,21 @@ export function subscribe(reactiveVariable: IReactiveVariable) {
 
 export function executeReactiveVariables() {
     reactiveVariablesChangedQueue.forEach((reactiveVariable) => {
+        const { value, prevValue } = reactiveVariable;
+
         // Run effect only if value really change after auto batching time (setInterval(executeReactiveVariables))
         if (reactiveVariable.mapSetVars) {
             if (!someChanges(reactiveVariable)) {
                 return false;
             }
-        } else if (reactiveVariable.prevValue === reactiveVariable.value) {
+        } else if (Array.isArray(value) && Array.isArray(prevValue)) {
+            if (value.length === prevValue.length) {
+                for (let i = 0; i < value.length; i++) {
+                    if (value[i] !== prevValue[i]) return false;
+                }
+            }
+        }
+        else if (prevValue === value) {
             return false;
         }
 

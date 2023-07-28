@@ -10,6 +10,16 @@ import {
 
 import { setObservableMapSet } from './set';
 
+const arrayPrototypes = {
+    'push': Array.prototype.push,
+    'pop': Array.prototype.pop,
+    'shift': Array.prototype.shift,
+    'unshift': Array.prototype.unshift,
+    'splice': Array.prototype.splice,
+    'sort': Array.prototype.sort,
+    'reverse': Array.prototype.reverse,
+}
+
 class ReactiveSubscribe {
     effects: EnhFunction[] = [];
     dependencies: IReactiveVariable[] = [];
@@ -51,6 +61,15 @@ export function markSynchronousReactions<T extends object, K extends keyof T>(ta
     }
 }
 
+function makeReactiveArray(arr: any[], reactiveVariable: IReactiveVariable) {
+    for (const k in arrayPrototypes) {
+        arr[k] = function () {
+            arrayPrototypes[k].apply(this, arguments);
+
+            dataChanged(reactiveVariable);
+        }
+    }
+}
 
 export function makeSingleReactive(target, key, value, getterTarget?: object) {
     const descriptor = Object.getOwnPropertyDescriptor(target, key);
@@ -73,6 +92,11 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
     };
 
     getSetReactiveVariable(target, key, reactiveVariable);
+
+    if (Array.isArray(target[key])) {
+        const arr = target[key];
+        makeReactiveArray(arr, reactiveVariable);
+    }
 
     /**
      * Computed - BEGIN
@@ -139,6 +163,10 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
 
             if (isDataChanged) {
                 reactiveVariable.value = v;
+
+                if (Array.isArray(v)) {
+                    makeReactiveArray(v, reactiveVariable);
+                }
 
                 dataChanged(reactiveVariable);
             }
