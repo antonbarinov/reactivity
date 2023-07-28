@@ -86,9 +86,14 @@ export function executeReactiveVariables() {
             }
         } else if (Array.isArray(value) && Array.isArray(prevValue)) {
             if (value.length === prevValue.length) {
+                let same = true;
                 for (let i = 0; i < value.length; i++) {
-                    if (value[i] !== prevValue[i]) return false;
+                    if (value[i] !== prevValue[i]) {
+                        same = false;
+                        break;
+                    }
                 }
+                if (same) return false;
             }
         }
         else if (prevValue === value) {

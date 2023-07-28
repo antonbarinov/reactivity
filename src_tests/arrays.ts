@@ -32,6 +32,12 @@ autorun(() => {
     test.arr = [1];
     await sleep(1);
     test.arr.push(2);
+    await sleep(1);
+    test.arr = [1,2];
+    await sleep(1);
+    test.arr = [1,2];
+    await sleep(1);
+    test.arr = [1,2,3];
 })();
 
 
