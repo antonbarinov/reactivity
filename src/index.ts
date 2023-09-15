@@ -90,6 +90,8 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
         value,
         prevValue: value,
         subscribers: new Set(),
+        target,
+        key,
     };
 
     getSetReactiveVariable(target, key, reactiveVariable);
@@ -156,7 +158,7 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
                     circularTracker = new WeakSet<IReactiveVariable>();
                     circularTrackerMap.set(effectFn, circularTracker);
                 }
-
+             
                 // Circular dependency previously was marked
                 if (circularTracker.has(reactiveVariable)) {
                     disposeEffect(effectFn);

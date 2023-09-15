@@ -3,6 +3,7 @@ import { reactiveSubscribe } from './index';
 export interface EnhFunction extends Function {
     __subscribedTo: Set<IReactiveVariable>;
     __effectBody: EnhFunction;
+    __subscribedValue: any;
 }
 
 export interface IReactiveVariable {
@@ -13,6 +14,8 @@ export interface IReactiveVariable {
     watchers?: Set<IReactiveVariable>;
     syncReactions?: boolean;
     mapSetVars?: Map<object | string, IReactiveVariable>;
+    target: any;
+    key?: string;
 }
 
 export const reactiveVariablesChangedQueue = new Set<IReactiveVariable>();
@@ -63,6 +66,7 @@ export function subscribe(reactiveVariable: IReactiveVariable) {
     if (effectFn) {
         reactiveVariable.subscribers.add(effectFn);
         effectFn.__subscribedTo.add(reactiveVariable);
+        effectFn.__subscribedValue = reactiveVariable.value;
     }
 
     if (reactiveSubscribe.dependencies.length) {
@@ -79,32 +83,21 @@ export function executeReactiveVariables() {
     reactiveVariablesChangedQueue.forEach((reactiveVariable) => {
         const { value, prevValue } = reactiveVariable;
 
-        // Run effect only if value really change after auto batching time (setInterval(executeReactiveVariables))
+        // [[[for new Map() and new Set() only]]] Run effect only if value really change after auto batching time (setInterval(executeReactiveVariables))
         if (reactiveVariable.mapSetVars) {
             if (!someChanges(reactiveVariable)) {
                 return false;
             }
-        } else if (Array.isArray(value) && Array.isArray(prevValue)) {
-            if (value.length === prevValue.length) {
-                let same = true;
-                for (let i = 0; i < value.length; i++) {
-                    if (value[i] !== prevValue[i]) {
-                        same = false;
-                        break;
-                    }
-                }
-                if (same) return false;
-            }
-        }
-        else if (prevValue === value) {
-            return false;
         }
 
         reactiveVariable.subscribers.forEach((effectFn) => {
-            effectsToExec.add(effectFn);
-        });
+            // Если на момент подписки значение изменилось, тогда вызовем реакцию
+            if (effectFn.__subscribedValue !== value) {
+                effectsToExec.add(effectFn);
+            }
+        })
 
-        reactiveVariable.prevValue = reactiveVariable.value;
+        //reactiveVariable.prevValue = reactiveVariable.value;
     });
 
     reactiveVariablesChangedQueue.clear();
@@ -154,6 +147,7 @@ function someChanges(reactiveVariable: IReactiveVariable) {
     let hasChanges = false;
     reactiveVariable.mapSetVars.forEach((rv) => {
         if (rv.prevValue !== rv.value) hasChanges = true;
+        rv.prevValue = rv.value
     });
 
     return hasChanges;

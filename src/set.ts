@@ -37,12 +37,14 @@ export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | '
         prevValue: false,
         subscribers: new Set(),
         mapSetVars: new Map(),
+        target,
     };
 
     const reactiveVariablesSize: IReactiveVariable = {
         value: target.size,
         prevValue: target.size,
         subscribers: new Set(),
+        target,
     };
 
     // Fill initial values
@@ -192,6 +194,7 @@ function registerMapSetReactiveVar(reactiveVariable: IReactiveVariable, key: str
             value: initVal,
             prevValue: initVal,
             subscribers: new Set(),
+            target: reactiveVariable.target,
         }
         reactiveVariable.mapSetVars.set(key, registered);
     }
