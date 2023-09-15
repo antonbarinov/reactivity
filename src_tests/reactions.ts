@@ -1,4 +1,4 @@
-import { autorun, reaction, reactive, when, markSynchronousReactions } from '../src';
+import { autorun, reaction, reactive, when, markSynchronousReactions, createReaction, makeSingleReactive, reactiveSubscribe } from '../src';
 import { sleep } from './helpers';
 
 

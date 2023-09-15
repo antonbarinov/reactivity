@@ -94,9 +94,11 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
 
     getSetReactiveVariable(target, key, reactiveVariable);
 
-    if (Array.isArray(target[key])) {
-        const arr = target[key];
-        makeReactiveArray(arr, reactiveVariable);
+    if (!descriptor.get) {
+        if (Array.isArray(target[key])) {
+            const arr = target[key];
+            makeReactiveArray(arr, reactiveVariable);
+        }
     }
 
     /**

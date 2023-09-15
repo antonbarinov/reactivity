@@ -20,23 +20,23 @@ autorun(() => {
 
 
 (async () => {
-    await sleep(1);
+    await sleep();
     test.arr.push(4);
-    await sleep(1);
+    await sleep();
     test.arr.push(5);
     test.arr.pop();
     test.arr.pop();
-    await sleep(1);
+    await sleep();
     test.arr = null;
-    await sleep(1);
+    await sleep();
     test.arr = [1];
-    await sleep(1);
+    await sleep();
     test.arr.push(2);
-    await sleep(1);
+    await sleep();
     test.arr = [1,2];
-    await sleep(1);
+    await sleep();
     test.arr = [1,2];
-    await sleep(1);
+    await sleep();
     test.arr = [1,2,3];
 })();
 
