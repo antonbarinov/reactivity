@@ -5,7 +5,7 @@ import {
     IReactiveVariable,
     EnhFunction,
     getSetReactiveVariable,
-    dataChanged,
+    dataChanged, computedInfo,
 } from './internal';
 
 import { setObservableMapSet } from './set';
@@ -72,7 +72,7 @@ function makeReactiveArray(arr: any[], reactiveVariable: IReactiveVariable) {
     }
 }
 
-export function makeSingleReactive(target, key, value, getterTarget?: object) {
+export function makeSingleReactive(target: object, key: string, value) {
     const descriptor = Object.getOwnPropertyDescriptor(target, key);
     if (descriptor.set) return false;
 
@@ -85,6 +85,46 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
     } else if (value instanceof WeakSet) {
         return setObservableMapSet(value, 'weak_set');
     }
+
+    /**
+     * Computed - BEGIN
+     */
+    if (descriptor.get) {
+        const getterFn = descriptor.get;
+
+        Object.defineProperty(target, key, {
+            get() {
+                const computedData = computedInfo(this, key);
+                const { reactiveVariable } = computedData;
+
+                subscribe(reactiveVariable);
+
+                if (!computedData.firstExec) {
+                    reactiveSubscribe.startDependency(reactiveVariable);
+                    reactiveVariable.value = getterFn.call(this);
+                    reactiveSubscribe.stopDependency();
+                } else {
+                    if (reactiveVariable.dependenciesChanged) {
+                        reactiveSubscribe.startDependency(reactiveVariable);
+                        reactiveVariable.value = getterFn.call(this);
+                        reactiveSubscribe.stopDependency();
+                    }
+                }
+                computedData.firstExec = true;
+
+                reactiveVariable.dependenciesChanged = false;
+
+                return reactiveVariable.value;
+            },
+            enumerable: false,
+            configurable: true,
+        })
+
+        return false;
+    }
+    /**
+     * Computed - END
+     */
 
     const reactiveVariable: IReactiveVariable = {
         value,
@@ -103,42 +143,6 @@ export function makeSingleReactive(target, key, value, getterTarget?: object) {
         }
     }
 
-    /**
-     * Computed - BEGIN
-     */
-    if (descriptor.get) {
-        const getterFn = descriptor.get;
-        let getterFirstRead = false;
-
-        Object.defineProperty(target, key, {
-            get() {
-                subscribe(reactiveVariable);
-
-                if (!getterFirstRead) {
-                    reactiveSubscribe.startDependency(reactiveVariable);
-                    reactiveVariable.value = getterFn.call(getterTarget);
-                    reactiveSubscribe.stopDependency();
-                } else {
-                    if (reactiveVariable.dependenciesChanged) {
-                        reactiveSubscribe.startDependency(reactiveVariable);
-                        reactiveVariable.value = getterFn.call(getterTarget);
-                        reactiveSubscribe.stopDependency();
-                    }
-                }
-                getterFirstRead = true;
-                reactiveVariable.dependenciesChanged = false;
-
-                return reactiveVariable.value;
-            },
-            enumerable: false,
-            configurable: true,
-        })
-
-        return false;
-    }
-    /**
-     * Computed - END
-     */
 
     Object.defineProperty(target, key, {
         get() {
@@ -216,7 +220,7 @@ export function reactive<T extends object, K extends keyof T>(target: T, annotat
             const descriptor = Object.getOwnPropertyDescriptor(target, key);
 
             if (descriptor.get) {
-                makeSingleReactive(target, key, undefined, target);
+                makeSingleReactive(target, key, undefined);
             } else if (descriptor.set) {
             } else {
                 const value = target[key];
@@ -248,7 +252,7 @@ export function reactive<T extends object, K extends keyof T>(target: T, annotat
             const descriptor = Object.getOwnPropertyDescriptor(proto, key);
 
             if (descriptor.get) {
-                makeSingleReactive(proto, key, undefined, target);
+                makeSingleReactive(proto, key, undefined);
             } else if (descriptor.set) {
 
             } else if (typeof proto[key] !== 'function') {

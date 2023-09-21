@@ -45,7 +45,7 @@ export function getReactiveVariable<T extends object, K extends keyof T>(target:
     return  reactiveTargetMap.get(key as string);
 }
 
-export function getSetReactiveVariable<T extends object, K extends keyof T>(target: T, key: K, reactiveVariable: IReactiveVariable) {
+export function getSetReactiveVariable<T extends object>(target: T, key: string, reactiveVariable: IReactiveVariable) {
     let reactiveTargetMap = reactiveVariablesWeakMap.get(target);
     if (!reactiveTargetMap) {
         reactiveTargetMap = new Map();
@@ -151,4 +151,35 @@ function someChanges(reactiveVariable: IReactiveVariable) {
     });
 
     return hasChanges;
+}
+
+
+interface IComputedData {
+    reactiveVariable: IReactiveVariable;
+    firstExec: boolean;
+}
+const computedWeakMap = new WeakMap<object, Map<string, IComputedData>>();
+export function computedInfo(target: object, key: string) {
+    let data = computedWeakMap.get(target)?.get(key);
+    if (!data) {
+        const reactiveVariable: IReactiveVariable = {
+            value: undefined,
+            prevValue: undefined,
+            subscribers: new Set(),
+            target,
+            key,
+        };
+
+        data = {
+            reactiveVariable: reactiveVariable,
+            firstExec: false,
+        }
+
+        const map = new Map();
+        computedWeakMap.set(target, map);
+    }
+
+    computedWeakMap.get(target).set(key, data);
+
+    return data;
 }
