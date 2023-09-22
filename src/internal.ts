@@ -160,7 +160,14 @@ interface IComputedData {
 }
 const computedWeakMap = new WeakMap<object, Map<string, IComputedData>>();
 export function computedInfo(target: object, key: string) {
-    let data = computedWeakMap.get(target)?.get(key);
+    let cache = computedWeakMap.get(target);
+    if (!cache) {
+        cache = new Map();
+        computedWeakMap.set(target, cache);
+    }
+
+    let data = cache.get(key);
+
     if (!data) {
         const reactiveVariable: IReactiveVariable = {
             value: undefined,
@@ -174,12 +181,9 @@ export function computedInfo(target: object, key: string) {
             reactiveVariable: reactiveVariable,
             firstExec: false,
         }
-
-        const map = new Map();
-        computedWeakMap.set(target, map);
     }
 
-    computedWeakMap.get(target).set(key, data);
+    cache.set(key, data);
 
     return data;
 }

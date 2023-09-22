@@ -12,6 +12,7 @@ class Test {
     }
 
     get mult() {
+        console.log('exeс mult getter');
         return this.counter * 2;
     }
 }
