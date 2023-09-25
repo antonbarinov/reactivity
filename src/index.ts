@@ -154,6 +154,7 @@ export function makeSingleReactive(target: object, key: string, value) {
             const effectFn = reactiveSubscribe.currentEffect || reactiveSubscribe.executedEffect;
 
             // Circular dependency check
+            /*
             if (effectFn && effectFn.__subscribedTo?.has(reactiveVariable)) {
                 let problemFnBody = effectFn.__effectBody || effectFn;
 
@@ -182,7 +183,7 @@ export function makeSingleReactive(target: object, key: string, value) {
                     // Mark circular dependency
                     circularTracker.add(reactiveVariable);
                 }
-            }
+            }*/
 
             const prevValue = reactiveVariable.value;
             const isDataChanged = prevValue !== v;
