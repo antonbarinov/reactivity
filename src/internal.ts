@@ -93,9 +93,7 @@ function getPairObjStr<T>(obj: object, key: string): T {
     }
 
     const rootObj = pairsRootObjStr.get(obj);
-    if (rootObj[key] === undefined) {
-        rootObj[key] = {};
-    }
+    rootObj[key] ??= {};
 
     return rootObj[key];
 }
