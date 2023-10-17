@@ -3,7 +3,6 @@ import { reactiveSubscribe } from './index';
 export interface EnhFunction extends Function {
     __subscribedTo: Set<IReactiveVariable>;
     __effectBody: EnhFunction;
-    __subscribedValue: any;
 }
 
 export interface IReactiveVariable {
@@ -56,6 +55,31 @@ export function getSetReactiveVariable<T extends object>(target: T, key: string,
     return reactiveTargetMap;
 }
 
+const pairsRoot = new WeakMap<object, WeakMap<object, any>>();
+function getPairObj(obj1: object, obj2: object) {
+    let wm1 = new WeakMap();
+    let wm2 = new WeakMap();
+    if (!pairsRoot.has(obj1)) {
+        pairsRoot.set(obj1, wm1);
+    }
+    if (!pairsRoot.has(obj2)) {
+        pairsRoot.set(obj2, wm2);
+    }
+
+    wm1 = pairsRoot.get(obj1);
+    wm2 = pairsRoot.get(obj2);
+    let newObj = {};
+
+    if (!wm1.has(obj2)) {
+        wm1.set(obj2, newObj);
+    }
+    if (!wm2.has(obj1)) {
+        wm2.set(obj1, newObj);
+    }
+
+    return wm1.get(obj2);
+}
+
 export function subscribe(reactiveVariable: IReactiveVariable) {
     const effectFn = reactiveSubscribe.currentEffect;
     if (effectFn && !reactiveVariable.subscribers.has(effectFn)) {
@@ -66,7 +90,9 @@ export function subscribe(reactiveVariable: IReactiveVariable) {
     if (effectFn) {
         reactiveVariable.subscribers.add(effectFn);
         effectFn.__subscribedTo.add(reactiveVariable);
-        effectFn.__subscribedValue = reactiveVariable.value;
+
+        const pair = getPairObj(effectFn, reactiveVariable);
+        pair.__subscribedValue = reactiveVariable.value;
     }
 
     if (reactiveSubscribe.dependencies.length) {
@@ -91,8 +117,11 @@ export function executeReactiveVariables() {
         }
 
         reactiveVariable.subscribers.forEach((effectFn) => {
+            const pair = getPairObj(effectFn, reactiveVariable);
+
             // Если на момент подписки значение изменилось, тогда вызовем реакцию
-            if (effectFn.__subscribedValue !== value) {
+            if (pair.__subscribedValue !== value) {
+                pair.__subscribedValue = value;
                 effectsToExec.add(effectFn);
             }
         })
@@ -165,7 +194,6 @@ export function computedInfo(target: object, key: string) {
         cache = new Map();
         computedWeakMap.set(target, cache);
     }
-
     let data = cache.get(key);
 
     if (!data) {

@@ -163,7 +163,7 @@ export function makeSingleReactive(target: object, key: string, value) {
                     circularTracker = new WeakSet<IReactiveVariable>();
                     circularTrackerMap.set(effectFn, circularTracker);
                 }
-             
+
                 // Circular dependency previously was marked
                 if (circularTracker.has(reactiveVariable)) {
                     disposeEffect(effectFn);

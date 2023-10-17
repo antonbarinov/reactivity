@@ -27,6 +27,8 @@ export function observer<P extends object>(baseComponent: React.FunctionComponen
             reaction.current = createReaction(forceUpdate);
         }
 
+        forceUpdate.__effectBody = baseComponent;
+
         let output;
         reaction.current.track(() => {
             output = baseComponent.apply({}, args);
