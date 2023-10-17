@@ -19,6 +19,7 @@ export interface IReactiveVariable {
     mapSetVars?: Map<object | string, IReactiveVariable>;
     target: any;
     key?: string;
+    forceUpdate?: boolean;
 }
 
 export const reactiveVariablesChangedQueue = new Set<IReactiveVariable>();
@@ -139,11 +140,13 @@ export function executeReactiveVariables() {
             const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
 
             // Если на момент подписки значение изменилось, тогда вызовем реакцию
-            if (pair.__subscribedValue !== value) {
+            if (pair.__subscribedValue !== value || reactiveVariable.forceUpdate) {
                 pair.__subscribedValue = value;
                 effectsToExec.add(effectFn);
             }
         });
+
+        reactiveVariable.forceUpdate = false;
     });
 
     reactiveVariablesChangedQueue.clear();

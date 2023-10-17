@@ -61,19 +61,22 @@ export function markSynchronousReactions<T extends object, K extends keyof T>(ta
     }
 }
 
-function makeReactiveArray(target: object, key: string, reactiveVariable: IReactiveVariable) {
-    for (const k in arrayPrototypes) {
-        Object.defineProperty(target[key], k, {
-            value: function () {
-                arrayPrototypes[k].apply(this, arguments);
-                target[key] = [...this];
+export const reactiveArrays = new WeakMap<object, IReactiveVariable>();
+for (const k in arrayPrototypes) {
+    Array.prototype[k] = function () {
+        const rv = reactiveArrays.get(this);
+        const result = arrayPrototypes[k].apply(this, arguments);
+        if (rv) {
+            rv.forceUpdate = true;
+            dataChanged(rv);
+        }
 
-                dataChanged(reactiveVariable);
-            },
-            enumerable: false,
-            configurable: true,
-        });
+        return result;
     }
+}
+
+function makeReactiveArray(arr: any[], reactiveVariable: IReactiveVariable) {
+    reactiveArrays.set(arr, reactiveVariable);
 }
 
 export function makeSingleReactive(target: object, key: string, value) {
@@ -142,7 +145,7 @@ export function makeSingleReactive(target: object, key: string, value) {
 
     if (!descriptor.get) {
         if (Array.isArray(target[key])) {
-            makeReactiveArray(target, key, reactiveVariable);
+            makeReactiveArray(target[key], reactiveVariable);
         }
     }
 
@@ -195,7 +198,7 @@ export function makeSingleReactive(target: object, key: string, value) {
                 reactiveVariable.value = v;
 
                 if (Array.isArray(v)) {
-                    makeReactiveArray(target, key, reactiveVariable);
+                    makeReactiveArray(v, reactiveVariable);
                 }
 
                 dataChanged(reactiveVariable);

@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect, memo } from 'react';
-import { createReaction } from './index';
+import { createReaction, reactiveArrays, reactiveSubscribe } from './index';
+import { subscribe } from './internal';
 
 // Fix react crazy idea with freezing props, that cause bugs in some cases when using truly computed getter functions
 Object.freeze = (o) => o;
@@ -28,6 +29,21 @@ export function observer<P extends object>(baseComponent: React.FunctionComponen
         }
 
         forceUpdate.__effectBody = baseComponent;
+
+        // Подписка на реактивные пропсы(Arrays) для реакций на .push и т.п., без [...arr]
+        const props = args[0];
+        for (const k in props) {
+            if (!props.hasOwnProperty(k)) continue;
+            const v = props[k];
+            if (Array.isArray(v)) {
+                const rv = reactiveArrays.get(v);
+                if (rv) {
+                    reactiveSubscribe.start(forceUpdate);
+                    subscribe(rv);
+                    reactiveSubscribe.stop();
+                }
+            }
+        }
 
         let output;
         reaction.current.track(() => {
