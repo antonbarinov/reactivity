@@ -38,6 +38,7 @@ autorun(() => {
     test.arr = [1,2];
     await sleep();
     test.arr = [1,2,3];
+    test.arr.push(4);
 })();
 
 

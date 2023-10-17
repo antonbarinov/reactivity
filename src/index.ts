@@ -64,8 +64,8 @@ export function markSynchronousReactions<T extends object, K extends keyof T>(ta
 function makeReactiveArray(arr: any[], reactiveVariable: IReactiveVariable) {
     for (const k in arrayPrototypes) {
         arr[k] = function () {
-            reactiveVariable.prevValue = [...this];
             arrayPrototypes[k].apply(this, arguments);
+            reactiveVariable.value = [...this];
 
             dataChanged(reactiveVariable);
         }
