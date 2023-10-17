@@ -61,14 +61,18 @@ export function markSynchronousReactions<T extends object, K extends keyof T>(ta
     }
 }
 
-function makeReactiveArray(arr: any[], reactiveVariable: IReactiveVariable) {
+function makeReactiveArray(target: object, key: string, reactiveVariable: IReactiveVariable) {
     for (const k in arrayPrototypes) {
-        arr[k] = function () {
-            arrayPrototypes[k].apply(this, arguments);
-            reactiveVariable.value = [...this];
+        Object.defineProperty(target[key], k, {
+            value: function () {
+                arrayPrototypes[k].apply(this, arguments);
+                target[key] = [...this];
 
-            dataChanged(reactiveVariable);
-        }
+                dataChanged(reactiveVariable);
+            },
+            enumerable: false,
+            configurable: true,
+        });
     }
 }
 
@@ -138,8 +142,7 @@ export function makeSingleReactive(target: object, key: string, value) {
 
     if (!descriptor.get) {
         if (Array.isArray(target[key])) {
-            const arr = target[key];
-            makeReactiveArray(arr, reactiveVariable);
+            makeReactiveArray(target, key, reactiveVariable);
         }
     }
 
@@ -192,7 +195,7 @@ export function makeSingleReactive(target: object, key: string, value) {
                 reactiveVariable.value = v;
 
                 if (Array.isArray(v)) {
-                    makeReactiveArray(v, reactiveVariable);
+                    makeReactiveArray(target, key, reactiveVariable);
                 }
 
                 dataChanged(reactiveVariable);

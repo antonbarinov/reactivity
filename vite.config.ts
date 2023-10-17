@@ -4,6 +4,7 @@ import * as fs from 'fs';
 
 // @ts-ignore
 import packageJson from './package.json';
+// @ts-ignore
 import { typingsGenerationPlugin } from './vite_plugins/types_declarations';
 
 process.env.NODE_ENV ??= 'development';
