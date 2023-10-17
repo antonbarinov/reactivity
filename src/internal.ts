@@ -5,6 +5,10 @@ export interface EnhFunction extends Function {
     __effectBody: EnhFunction;
 }
 
+interface IPairedEffectFnWithReactiveVariable {
+    __subscribedValue: any;
+}
+
 export interface IReactiveVariable {
     value: any;
     prevValue: any;
@@ -55,19 +59,20 @@ export function getSetReactiveVariable<T extends object>(target: T, key: string,
     return reactiveTargetMap;
 }
 
-const pairsRoot = new WeakMap<object, WeakMap<object, any>>();
-function getPairObj(obj1: object, obj2: object) {
+const pairsRootObj = new WeakMap<object, WeakMap<object, any>>();
+// Пара объект1 <==> объект2, порядок не имеет значение
+function getPairObj<T>(obj1: object, obj2: object): T {
     let wm1 = new WeakMap();
     let wm2 = new WeakMap();
-    if (!pairsRoot.has(obj1)) {
-        pairsRoot.set(obj1, wm1);
+    if (!pairsRootObj.has(obj1)) {
+        pairsRootObj.set(obj1, wm1);
     }
-    if (!pairsRoot.has(obj2)) {
-        pairsRoot.set(obj2, wm2);
+    if (!pairsRootObj.has(obj2)) {
+        pairsRootObj.set(obj2, wm2);
     }
 
-    wm1 = pairsRoot.get(obj1);
-    wm2 = pairsRoot.get(obj2);
+    wm1 = pairsRootObj.get(obj1);
+    wm2 = pairsRootObj.get(obj2);
     let newObj = {};
 
     if (!wm1.has(obj2)) {
@@ -80,6 +85,22 @@ function getPairObj(obj1: object, obj2: object) {
     return wm1.get(obj2);
 }
 
+const pairsRootObjStr = new WeakMap<object, { [k: string]: any }>();
+// Пара объект => ключ(строка)
+function getPairObjStr<T>(obj: object, key: string): T {
+    if (!pairsRootObjStr.has(obj)) {
+        pairsRootObjStr.set(obj, {});
+    }
+
+    const rootObj = pairsRootObjStr.get(obj);
+    if (rootObj[key] === undefined) {
+        rootObj[key] = {};
+    }
+
+    return rootObj[key];
+}
+
+
 export function subscribe(reactiveVariable: IReactiveVariable) {
     const effectFn = reactiveSubscribe.currentEffect;
     if (effectFn && !reactiveVariable.subscribers.has(effectFn)) {
@@ -91,7 +112,7 @@ export function subscribe(reactiveVariable: IReactiveVariable) {
         reactiveVariable.subscribers.add(effectFn);
         effectFn.__subscribedTo.add(reactiveVariable);
 
-        const pair = getPairObj(effectFn, reactiveVariable);
+        const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
         pair.__subscribedValue = reactiveVariable.value;
     }
 
@@ -117,16 +138,14 @@ export function executeReactiveVariables() {
         }
 
         reactiveVariable.subscribers.forEach((effectFn) => {
-            const pair = getPairObj(effectFn, reactiveVariable);
+            const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
 
             // Если на момент подписки значение изменилось, тогда вызовем реакцию
             if (pair.__subscribedValue !== value) {
                 pair.__subscribedValue = value;
                 effectsToExec.add(effectFn);
             }
-        })
-
-        //reactiveVariable.prevValue = reactiveVariable.value;
+        });
     });
 
     reactiveVariablesChangedQueue.clear();
@@ -187,17 +206,12 @@ interface IComputedData {
     reactiveVariable: IReactiveVariable;
     firstExec: boolean;
 }
-const computedWeakMap = new WeakMap<object, Map<string, IComputedData>>();
-export function computedInfo(target: object, key: string) {
-    let cache = computedWeakMap.get(target);
-    if (!cache) {
-        cache = new Map();
-        computedWeakMap.set(target, cache);
-    }
-    let data = cache.get(key);
 
-    if (!data) {
-        const reactiveVariable: IReactiveVariable = {
+export function computedInfo(target: object, key: string) {
+    const data = getPairObjStr<IComputedData>(target, key);
+
+    if (!data.reactiveVariable) {
+        data.reactiveVariable = {
             value: undefined,
             prevValue: undefined,
             subscribers: new Set(),
@@ -205,13 +219,8 @@ export function computedInfo(target: object, key: string) {
             key,
         };
 
-        data = {
-            reactiveVariable: reactiveVariable,
-            firstExec: false,
-        }
+        data.firstExec = false;
     }
-
-    cache.set(key, data);
 
     return data;
 }
