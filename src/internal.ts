@@ -13,15 +13,17 @@ export interface IReactiveVariable {
     value: any;
     prevValue: any;
     subscribers: Set<EnhFunction>;
-    dependenciesChanged?: boolean;
     watchers?: Set<IReactiveVariable>;
     syncReactions?: boolean;
     mapSetVars?: Map<object | string, IReactiveVariable>;
     target: any;
     key?: string;
     forceUpdate?: boolean;
-    // Computed only
+
+    // Computed only section -- BEGIN
     allowComputedSubscribe?: boolean;
+    dependenciesChanged?: boolean;
+    // Computed only section -- END
 }
 
 export const reactiveVariablesChangedQueue = new Set<IReactiveVariable>();
@@ -31,7 +33,7 @@ const reactiveVariablesWeakMap = new WeakMap<object, Map<string, IReactiveVariab
 export function watchersCheck(reactiveVariable: IReactiveVariable) {
     function check(r: IReactiveVariable) {
         r?.watchers?.forEach((dep) => {
-            dep.dependenciesChanged = true;
+            dep.dependenciesChanged = true; // Used in computed only
             pushReaction(dep);
             check(dep);
         });
