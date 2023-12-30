@@ -1,4 +1,4 @@
-import { reactiveSubscribe } from './index';
+import { computedSubscribe, reactiveSubscribe } from './index';
 
 export interface EnhFunction extends Function {
     __subscribedTo: Set<IReactiveVariable>;
@@ -20,6 +20,7 @@ export interface IReactiveVariable {
     target: any;
     key?: string;
     forceUpdate?: boolean;
+    allowSubscribe?: boolean;
 }
 
 export const reactiveVariablesChangedQueue = new Set<IReactiveVariable>();
@@ -115,10 +116,12 @@ export function subscribe(reactiveVariable: IReactiveVariable) {
         pair.__subscribedValue = reactiveVariable.value;
     }
 
-    if (reactiveSubscribe.dependencies.length) {
+    if (computedSubscribe.dependencies.length) {
         if (!reactiveVariable.watchers) reactiveVariable.watchers = new Set<IReactiveVariable>();
-        for (const dep of reactiveSubscribe.dependencies) {
-            reactiveVariable.watchers.add(dep);
+        for (const dep of computedSubscribe.dependencies) {
+            if (dep.allowSubscribe || dep.allowSubscribe === undefined) {
+                reactiveVariable.watchers.add(dep);
+            }
         }
     }
 

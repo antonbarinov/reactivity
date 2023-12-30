@@ -22,7 +22,6 @@ const arrayPrototypes = {
 
 class ReactiveSubscribe {
     effects: EnhFunction[] = [];
-    dependencies: IReactiveVariable[] = [];
     syncMode = false;
     // Currently executed effect
     executedEffect: EnhFunction = null;
@@ -38,6 +37,14 @@ class ReactiveSubscribe {
     stop = () => {
         this.effects.pop();
     }
+}
+
+class ComputedSubscribe {
+    dependencies: IReactiveVariable[] = [];
+
+    get currentDependency() {
+        return this.dependencies[this.dependencies.length - 1];
+    }
 
     startDependency = (reactiveVariable: IReactiveVariable) => {
         this.dependencies.push(reactiveVariable);
@@ -48,6 +55,7 @@ class ReactiveSubscribe {
     }
 }
 
+export const computedSubscribe = new ComputedSubscribe();
 export const reactiveSubscribe = new ReactiveSubscribe();
 
 // Sync reactions
@@ -107,14 +115,14 @@ export function makeSingleReactive(target: object, key: string, value) {
                 subscribe(reactiveVariable);
 
                 if (!computedData.firstExec) {
-                    reactiveSubscribe.startDependency(reactiveVariable);
+                    computedSubscribe.startDependency(reactiveVariable);
                     reactiveVariable.value = getterFn.call(this);
-                    reactiveSubscribe.stopDependency();
+                    computedSubscribe.stopDependency();
                 } else {
                     if (reactiveVariable.dependenciesChanged) {
-                        reactiveSubscribe.startDependency(reactiveVariable);
+                        computedSubscribe.startDependency(reactiveVariable);
                         reactiveVariable.value = getterFn.call(this);
-                        reactiveSubscribe.stopDependency();
+                        computedSubscribe.stopDependency();
                     }
                 }
                 computedData.firstExec = true;
