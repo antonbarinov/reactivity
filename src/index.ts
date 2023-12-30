@@ -116,11 +116,13 @@ export function makeSingleReactive(target: object, key: string, value) {
 
                 if (!computedData.firstExec) {
                     computedSubscribe.startDependency(reactiveVariable);
+                    reactiveVariable.allowComputedSubscribe = true;
                     reactiveVariable.value = getterFn.call(this);
                     computedSubscribe.stopDependency();
                 } else {
                     if (reactiveVariable.dependenciesChanged) {
                         computedSubscribe.startDependency(reactiveVariable);
+                        reactiveVariable.allowComputedSubscribe = true;
                         reactiveVariable.value = getterFn.call(this);
                         computedSubscribe.stopDependency();
                     }

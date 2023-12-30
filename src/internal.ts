@@ -20,7 +20,8 @@ export interface IReactiveVariable {
     target: any;
     key?: string;
     forceUpdate?: boolean;
-    allowSubscribe?: boolean;
+    // Computed only
+    allowComputedSubscribe?: boolean;
 }
 
 export const reactiveVariablesChangedQueue = new Set<IReactiveVariable>();
@@ -119,7 +120,7 @@ export function subscribe(reactiveVariable: IReactiveVariable) {
     if (computedSubscribe.dependencies.length) {
         if (!reactiveVariable.watchers) reactiveVariable.watchers = new Set<IReactiveVariable>();
         for (const dep of computedSubscribe.dependencies) {
-            if (dep.allowSubscribe || dep.allowSubscribe === undefined) {
+            if (dep.allowComputedSubscribe || dep.allowComputedSubscribe === undefined) {
                 reactiveVariable.watchers.add(dep);
             }
         }
