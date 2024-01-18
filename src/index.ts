@@ -341,15 +341,36 @@ export function autorun(fn: (disposeFn: Function) => any) {
     return dispose;
 }
 
-export function when(fn: () => boolean) {
+export function when(fn: () => boolean, interval?: number) {
     let res: Function = null;
     const promise = new Promise((resolve) => { res = resolve; });
+    let resolved = false;
 
     autorun(() => {
-        if (fn()) res(true);
+        if (fn()) {
+            res(true);
+            resolved  = true;
+        }
     });
 
+
+    (async () => {
+        if (interval && !resolved) {
+            while (!fn()) {
+                await sleep(interval);
+            }
+
+            res(true);
+        }
+    })();
+
     return promise;
+}
+
+function sleep(ms = 0) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
 }
 
 setInterval(executeReactiveVariables);
