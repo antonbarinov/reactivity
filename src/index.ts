@@ -91,6 +91,8 @@ export function makeSingleReactive(target: object, key: string, value) {
     const descriptor = Object.getOwnPropertyDescriptor(target, key);
     if (descriptor.set) return false;
 
+    const constructorName = target.constructor.name;
+
     if (value instanceof Map) {
         return setObservableMapSet(value, 'map');
     } else if (value instanceof Set) {
@@ -124,6 +126,8 @@ export function makeSingleReactive(target: object, key: string, value) {
 
                 reactiveVariable.dependenciesChanged = false;
 
+                //console.log(`[read getter] ${constructorName}.${key}`, reactiveVariable.value);
+
                 return reactiveVariable.value;
             },
             enumerable: false,
@@ -156,6 +160,8 @@ export function makeSingleReactive(target: object, key: string, value) {
     Object.defineProperty(target, key, {
         get() {
             subscribe(reactiveVariable);
+
+            //console.log(`[read] ${constructorName}.${key}`);
 
             return reactiveVariable.value;
         },
@@ -199,6 +205,8 @@ export function makeSingleReactive(target: object, key: string, value) {
 
             if (isDataChanged) {
                 reactiveVariable.value = v;
+
+                //console.log(`[write] ${constructorName}.${key} = `, v);
 
                 if (Array.isArray(v)) {
                     makeReactiveArray(v, reactiveVariable);
@@ -374,5 +382,51 @@ function sleep(ms = 0) {
 }
 
 setInterval(executeReactiveVariables);
+
+
+
+type AnyFn = (...args: any[]) => any;
+
+const actionListeners = new WeakMap<AnyFn, Set<AnyFn>>();
+
+export function actionSubscribe(action: AnyFn, cb: AnyFn) {
+    let listeners = actionListeners.get(action);
+    if (!listeners) {
+        listeners = new Set<AnyFn>();
+        actionListeners.set(action, listeners);
+    }
+
+    listeners.add(cb);
+
+    return () => actionUnsubscribe(action, cb);
+}
+
+export function actionUnsubscribe(action: AnyFn, cb: AnyFn) {
+    const listeners = actionListeners.get(action);
+    if (listeners) listeners.delete(cb);
+}
+
+export function decorateActions(context: object) {
+    const constructorName = context.constructor.name;
+
+    for (const k in context) {
+        const val = context[k];
+        if (typeof val === 'function') {
+            function wrapper() {
+                //console.log(`${constructorName}.${k} executed`);
+
+                const listeners = actionListeners.get(context[k]);
+
+                if (listeners) {
+                    listeners.forEach((cb) => cb());
+                }
+
+                return val.apply(this, arguments);
+            }
+
+            context[k] = wrapper;
+        }
+    }
+}
 
 
