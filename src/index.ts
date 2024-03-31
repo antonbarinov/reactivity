@@ -381,10 +381,6 @@ function sleep(ms = 0) {
     });
 }
 
-setInterval(executeReactiveVariables);
-
-
-
 type AnyFn = (...args: any[]) => any;
 
 const actionListeners = new WeakMap<AnyFn, Set<AnyFn>>();

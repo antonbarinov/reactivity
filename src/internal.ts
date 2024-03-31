@@ -186,6 +186,7 @@ function executeEffects() {
     effectsToExec.clear();
 }
 
+let execBatchedReactionsInProgress = false;
 export function dataChanged(reactiveVariable: IReactiveVariable) {
     // Computed functions watchers
     watchersCheck(reactiveVariable);
@@ -194,6 +195,16 @@ export function dataChanged(reactiveVariable: IReactiveVariable) {
         executeSyncSingleReactiveVariable(reactiveVariable);
     } else {
         pushReaction(reactiveVariable);
+    }
+
+    // Do not used clearTimeout because of performance reason (it calls external WebAPI)
+    if (!execBatchedReactionsInProgress) {
+        execBatchedReactionsInProgress = true;
+
+        setTimeout(() => {
+            execBatchedReactionsInProgress = false;
+            executeReactiveVariables();
+        });
     }
 }
 
