@@ -288,15 +288,13 @@ export function reactive<T extends object, K extends keyof T>(target: T, annotat
 function disposeEffect(effectFn: EnhFunction) {
     const circularTracker = circularTrackerMap.get(effectFn);
 
-    if (effectFn.__subscribedTo !== undefined) {
-        effectFn.__subscribedTo.forEach((reactiveVariable) => {
-            reactiveVariable.subscribers.delete(effectFn);
+    effectFn.__subscribedTo?.forEach((reactiveVariable) => {
+        reactiveVariable.subscribers.delete(effectFn);
 
-            if (circularTracker) {
-                circularTracker.delete(reactiveVariable);
-            }
-        });
-    }
+        if (circularTracker) {
+            circularTracker.delete(reactiveVariable);
+        }
+    });
 
     circularTrackerMap.delete(effectFn);
 }
