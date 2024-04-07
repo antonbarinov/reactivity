@@ -5,8 +5,11 @@ export interface EnhFunction extends Function {
     __effectBody: EnhFunction;
 }
 
-interface IPairedEffectFnWithReactiveVariable {
+export interface IPairedEffectFnWithReactiveVariable {
     __subscribedValue: any;
+
+    __circularCalls: number;
+    __circularMark: boolean;
 }
 
 export interface IReactiveVariable {
@@ -66,19 +69,20 @@ export function getSetReactiveVariable<T extends object>(target: T, key: string,
 
 const pairsRootObj = new WeakMap<object, WeakMap<object, any>>();
 // Пара объект1 <==> объект2, порядок не имеет значение
-function getPairObj<T>(obj1: object, obj2: object): T {
-    let wm1 = new WeakMap();
-    let wm2 = new WeakMap();
-    if (!pairsRootObj.has(obj1)) {
+export function getPairObj<T>(obj1: object, obj2: object): T {
+    let wm1 = pairsRootObj.get(obj1);
+    let wm2 = pairsRootObj.get(obj2);
+
+    if (!wm1) {
+        wm1 = new WeakMap();
         pairsRootObj.set(obj1, wm1);
     }
-    if (!pairsRootObj.has(obj2)) {
+    if (!wm2) {
+        wm2 = new WeakMap();
         pairsRootObj.set(obj2, wm2);
     }
 
-    wm1 = pairsRootObj.get(obj1);
-    wm2 = pairsRootObj.get(obj2);
-    let newObj = {};
+    const newObj = {};
 
     if (!wm1.has(obj2)) {
         wm1.set(obj2, newObj);
@@ -162,6 +166,13 @@ export function executeSyncSingleReactiveVariable(reactiveVariable: IReactiveVar
         reactiveSubscribe.executedEffect = effectFn;
         effectFn();
         reactiveSubscribe.executedEffect = null;
+
+        const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
+        if (pair.__circularMark) {
+            pair.__circularCalls ??= 0;
+            pair.__circularCalls++;
+            pair.__circularMark = false;
+        }
     });
 
     // Remove from async auto batch queue because sync reaction right now

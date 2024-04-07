@@ -5,7 +5,7 @@ import {
     IReactiveVariable,
     EnhFunction,
     getSetReactiveVariable,
-    dataChanged, computedInfo,
+    dataChanged, computedInfo, getPairObj, IPairedEffectFnWithReactiveVariable,
 } from './internal';
 
 import { setObservableMapSet } from './set';
@@ -169,18 +169,14 @@ export function makeSingleReactive(target: object, key: string, value) {
             const effectFn = reactiveSubscribe.currentEffect || reactiveSubscribe.executedEffect;
 
             // Circular dependency check
-            /*
             if (effectFn && effectFn.__subscribedTo?.has(reactiveVariable)) {
                 let problemFnBody = effectFn.__effectBody || effectFn;
 
-                let circularTracker = circularTrackerMap.get(effectFn);
-                if (!circularTracker) {
-                    circularTracker = new WeakSet<IReactiveVariable>();
-                    circularTrackerMap.set(effectFn, circularTracker);
-                }
+                const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
+                pair.__circularMark = true;
 
                 // Circular dependency previously was marked
-                if (circularTracker.has(reactiveVariable)) {
+                if (pair.__circularCalls > 0) {
                     disposeEffect(effectFn);
 
                     console.error('Circular dependency changes detected in:');
@@ -194,11 +190,8 @@ export function makeSingleReactive(target: object, key: string, value) {
                     );
 
                     return false;
-                } else {
-                    // Mark circular dependency
-                    circularTracker.add(reactiveVariable);
                 }
-            }*/
+            }
 
             const prevValue = reactiveVariable.value;
             const isDataChanged = prevValue !== v;
@@ -220,8 +213,6 @@ export function makeSingleReactive(target: object, key: string, value) {
     });
 }
 const alreadyReactive = new WeakSet();
-
-const circularTrackerMap = new WeakMap<EnhFunction, WeakSet<IReactiveVariable>>();
 
 
 export function reactive<T extends object, K extends keyof T>(target: T, annotations?: K[], ignore?: boolean) {
@@ -286,17 +277,9 @@ export function reactive<T extends object, K extends keyof T>(target: T, annotat
 }
 
 function disposeEffect(effectFn: EnhFunction) {
-    const circularTracker = circularTrackerMap.get(effectFn);
-
     effectFn.__subscribedTo?.forEach((reactiveVariable) => {
         reactiveVariable.subscribers.delete(effectFn);
-
-        if (circularTracker) {
-            circularTracker.delete(reactiveVariable);
-        }
     });
-
-    circularTrackerMap.delete(effectFn);
 }
 
 export function createReaction(effectFn: Function) {
