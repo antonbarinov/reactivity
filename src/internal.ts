@@ -107,11 +107,8 @@ function getPairObjStr<T>(obj: object, key: string): T {
 export function subscribe(reactiveVariable: IReactiveVariable) {
     const effectFn = reactiveSubscribe.currentEffect;
     if (effectFn && !reactiveVariable.subscribers.has(effectFn)) {
-        if (effectFn.__subscribedTo === undefined) {
-            effectFn.__subscribedTo = new Set();
-        }
-    }
-    if (effectFn) {
+        effectFn.__subscribedTo ??= new Set();
+
         reactiveVariable.subscribers.add(effectFn);
         effectFn.__subscribedTo.add(reactiveVariable);
 
@@ -120,7 +117,7 @@ export function subscribe(reactiveVariable: IReactiveVariable) {
     }
 
     if (computedSubscribe.dependencies.length) {
-        if (!reactiveVariable.watchers) reactiveVariable.watchers = new Set<IReactiveVariable>();
+        reactiveVariable.watchers ??= new Set<IReactiveVariable>();
         for (const dep of computedSubscribe.dependencies) {
             if (dep.allowComputedSubscribe || dep.allowComputedSubscribe === undefined) {
                 reactiveVariable.watchers.add(dep);
@@ -195,16 +192,16 @@ export function dataChanged(reactiveVariable: IReactiveVariable) {
         executeSyncSingleReactiveVariable(reactiveVariable);
     } else {
         pushReaction(reactiveVariable);
-    }
 
-    // Do not used clearTimeout because of performance reason (it calls external WebAPI)
-    if (!execBatchedReactionsInProgress) {
-        execBatchedReactionsInProgress = true;
+        // Do not used clearTimeout because of performance reason (it calls external WebAPI)
+        if (!execBatchedReactionsInProgress) {
+            execBatchedReactionsInProgress = true;
 
-        setTimeout(() => {
-            execBatchedReactionsInProgress = false;
-            executeReactiveVariables();
-        });
+            setTimeout(() => {
+                execBatchedReactionsInProgress = false;
+                executeReactiveVariables();
+            });
+        }
     }
 }
 
