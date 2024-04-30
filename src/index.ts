@@ -225,23 +225,19 @@ export function reactive<T extends object, K extends keyof T>(target: T, annotat
             if (!ignore && !annotations.includes(key as any)) continue;
         }
 
-        if (target.hasOwnProperty(key)) {
-            const descriptor = Object.getOwnPropertyDescriptor(target, key);
+        if (!target.hasOwnProperty(key)) continue;
+        const descriptor = Object.getOwnPropertyDescriptor(target, key);
 
-            if (descriptor.get) {
-                makeSingleReactive(target, key, undefined);
-            } else if (descriptor.set) {
-            } else {
-                const value = target[key];
-                if (typeof value !== 'function') {
-                    makeSingleReactive(target, key, target[key]);
-                }
-            }
+        if (descriptor.get) {
+            makeSingleReactive(target, key, undefined);
+        } else if (descriptor.set) {
+        } else if (typeof target[key] !== 'function') {
+            makeSingleReactive(target, key, target[key]);
         }
     }
 
     /**
-     * Work with getters
+     * Work with getters -- BEGIN
      */
     const proto = Object.getPrototypeOf(target);
 
@@ -252,12 +248,14 @@ export function reactive<T extends object, K extends keyof T>(target: T, annotat
         const keys = Object.getOwnPropertyNames(proto);
 
         for (const key of keys) {
-            if (key === 'constructor') continue;
+            if (key === 'constructor' || key === '__proto__') continue;
+
             if (annotations) {
                 if (ignore && annotations.includes(key as any)) continue;
                 if (!ignore && !annotations.includes(key as any)) continue;
             }
 
+            if (!proto.hasOwnProperty(key)) continue;
             const descriptor = Object.getOwnPropertyDescriptor(proto, key);
 
             if (descriptor.get) {
