@@ -4,7 +4,7 @@ import {
     getReactiveVariable,
     IReactiveVariable,
     EnhFunction,
-    getSetReactiveVariable,
+    setReactiveVariableInMap,
     dataChanged, computedInfo, getPairObj, IPairedEffectFnWithReactiveVariable,
 } from './internal';
 
@@ -144,11 +144,11 @@ export function makeSingleReactive(target: object, key: string, value) {
         value,
         prevValue: value,
         subscribers: new Set(),
-        target,
+        parentTarget: target,
         key,
     };
 
-    getSetReactiveVariable(target, key, reactiveVariable);
+    setReactiveVariableInMap(target, key, reactiveVariable);
 
     if (!descriptor.get) {
         if (Array.isArray(target[key])) {

@@ -1,11 +1,14 @@
 import { computedSubscribe, reactiveSubscribe } from './index';
 
 export interface EnhFunction extends Function {
+    // На какие реактивные переменные подписана данная функция
     __subscribedTo: Set<IReactiveVariable>;
+    // Тело функции
     __effectBody: EnhFunction;
 }
 
 export interface IPairedEffectFnWithReactiveVariable {
+    // Значение в момент подписки
     __subscribedValue: any;
 
     __circularCalls: number;
@@ -13,29 +16,54 @@ export interface IPairedEffectFnWithReactiveVariable {
 }
 
 export interface IReactiveVariable {
+    // Текущее значение
     value: any;
+    // Предыдущее значение
     prevValue: any;
+    // Подписчики на изменение данной реактивной переменной
     subscribers: Set<EnhFunction>;
-    watchers?: Set<IReactiveVariable>;
+    // Вызывать ли синхронные реакции на изменение данной реактивной переменной
     syncReactions?: boolean;
-    mapSetVars?: Map<object | string, IReactiveVariable>;
-    target: any;
+    // Родительский объект для данной реактивной переменной
+    parentTarget: any;
+    // Название свойста в родительском объекте для данной реактивной переменной
     key?: string;
+    // Вызывать ли реакции на эту реактивную переменную вне зависимости от того, была ли она реально изменена или нет
     forceUpdate?: boolean;
 
-    // Computed only section -- BEGIN
+    /**
+     * new Map() and new Get() section only -- BEGIN
+     */
+    mapSetVars?: Map<object | string, IReactiveVariable>;
+    /**
+     * new Map() and new Get() section only -- END
+     */
+
+    /**
+     * Computed only section -- BEGIN
+     * */
+    // Разрешить подписку на computed функции на реактивные перменные которые она видит в процессе выполнения
     allowComputedSubscribe?: boolean;
+    // Были ли изменены зависимости (если да, то буду перевызвана computed функция)
     dependenciesChanged?: boolean;
-    // Computed only section -- END
+    // computed функции подписанные на изменение этой реактивной переменной
+    computedWatchers?: Set<IReactiveVariable>;
+    /**
+     * Computed only section -- END
+     * */
 }
 
+// Реактивные переменные которые были изменены
 export const reactiveVariablesChangedQueue = new Set<IReactiveVariable>();
+// Функции которые нужно вызвать в качестве реакций
 const effectsToExec = new Set<EnhFunction>();
+// Используется в функции getReactiveVariable
 const reactiveVariablesWeakMap = new WeakMap<object, Map<string, IReactiveVariable>>();
 
-export function watchersCheck(reactiveVariable: IReactiveVariable) {
+// Пометить computed'ы следящие за реактивной переменной, что ее зависимости изменились чтобы computed функция была вызвана снова
+export function computedFunctionsWatchersCheck(reactiveVariable: IReactiveVariable) {
     function check(r: IReactiveVariable) {
-        r?.watchers?.forEach((dep) => {
+        r?.computedWatchers?.forEach((dep) => {
             dep.dependenciesChanged = true; // Used in computed only
             pushReaction(dep);
             check(dep);
@@ -49,6 +77,7 @@ export function pushReaction(reactiveVariable: IReactiveVariable) {
     reactiveVariablesChangedQueue.add(reactiveVariable);
 }
 
+// Получить реактивную переменную зная родительский объект и название свойства (ключ). Например someObj.someVal - getReactiveVariable(someObj, 'someVal')
 export function getReactiveVariable<T extends object, K extends keyof T>(target: T, key: K) {
     const reactiveTargetMap = reactiveVariablesWeakMap.get(target);
     if (!reactiveTargetMap) return  null;
@@ -56,7 +85,7 @@ export function getReactiveVariable<T extends object, K extends keyof T>(target:
     return  reactiveTargetMap.get(key as string);
 }
 
-export function getSetReactiveVariable<T extends object>(target: T, key: string, reactiveVariable: IReactiveVariable) {
+export function setReactiveVariableInMap<T extends object>(target: T, key: string, reactiveVariable: IReactiveVariable) {
     let reactiveTargetMap = reactiveVariablesWeakMap.get(target);
     if (!reactiveTargetMap) {
         reactiveTargetMap = new Map();
@@ -121,10 +150,10 @@ export function subscribe(reactiveVariable: IReactiveVariable) {
     }
 
     if (computedSubscribe.dependencies.length) {
-        reactiveVariable.watchers ??= new Set<IReactiveVariable>();
+        reactiveVariable.computedWatchers ??= new Set<IReactiveVariable>();
         for (const dep of computedSubscribe.dependencies) {
             if (dep.allowComputedSubscribe || dep.allowComputedSubscribe === undefined) {
-                reactiveVariable.watchers.add(dep);
+                reactiveVariable.computedWatchers.add(dep);
             }
         }
     }
@@ -138,7 +167,7 @@ export function executeReactiveVariables() {
 
         // [[[for new Map() and new Set() only]]] Run effect only if value really change after auto batching time (setInterval(executeReactiveVariables))
         if (reactiveVariable.mapSetVars) {
-            if (!someChanges(reactiveVariable)) {
+            if (!checkChangesForMapAndSet(reactiveVariable)) {
                 return false;
             }
         }
@@ -197,7 +226,7 @@ function executeEffects() {
 let execBatchedReactionsInProgress = false;
 export function dataChanged(reactiveVariable: IReactiveVariable) {
     // Computed functions watchers
-    watchersCheck(reactiveVariable);
+    computedFunctionsWatchersCheck(reactiveVariable);
 
     if (reactiveSubscribe.syncMode || reactiveVariable.syncReactions) {
         executeSyncSingleReactiveVariable(reactiveVariable);
@@ -216,8 +245,8 @@ export function dataChanged(reactiveVariable: IReactiveVariable) {
     }
 }
 
-
-function someChanges(reactiveVariable: IReactiveVariable) {
+// Проверка были ли изменения в new Set() и new Map()
+function checkChangesForMapAndSet(reactiveVariable: IReactiveVariable) {
     let hasChanges = false;
     reactiveVariable.mapSetVars.forEach((rv) => {
         if (rv.prevValue !== rv.value) hasChanges = true;
@@ -241,7 +270,7 @@ export function computedInfo(target: object, key: string) {
             value: undefined,
             prevValue: undefined,
             subscribers: new Set(),
-            target,
+            parentTarget: target,
             key,
         };
 
