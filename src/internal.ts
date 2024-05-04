@@ -195,13 +195,6 @@ export function executeSyncSingleReactiveVariable(reactiveVariable: IReactiveVar
         reactiveSubscribe.executedEffect = effectFn;
         effectFn();
         reactiveSubscribe.executedEffect = null;
-
-        const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
-        if (pair.__circularMark) {
-            pair.__circularCalls ??= 0;
-            pair.__circularCalls++;
-            pair.__circularMark = false;
-        }
     });
 
     // Remove from async auto batch queue because sync reaction right now
@@ -210,9 +203,9 @@ export function executeSyncSingleReactiveVariable(reactiveVariable: IReactiveVar
 
 function executeEffects() {
     try {
-        effectsToExec.forEach((fn) => {
-            reactiveSubscribe.executedEffect = fn;
-            fn();
+        effectsToExec.forEach((effectFn) => {
+            reactiveSubscribe.executedEffect = effectFn;
+            effectFn();
             reactiveSubscribe.executedEffect = null;
         });
     } catch (e) {

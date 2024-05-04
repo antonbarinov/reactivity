@@ -168,12 +168,19 @@ export function makeSingleReactive(target: object, key: string, value) {
         set(v) {
             const effectFn = reactiveSubscribe.currentEffect || reactiveSubscribe.executedEffect;
 
+            const prevValue = reactiveVariable.value;
+            const isDataChanged = prevValue !== v;
+
             // Circular dependency check
             if (effectFn && effectFn.__subscribedTo?.has(reactiveVariable)) {
                 let problemFnBody = effectFn.__effectBody || effectFn;
 
                 const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
                 pair.__circularMark = true;
+                if (isDataChanged) {
+                    pair.__circularCalls ??= -1;
+                    pair.__circularCalls++;
+                }
 
                 // Circular dependency previously was marked
                 if (pair.__circularCalls > 0) {
@@ -192,9 +199,6 @@ export function makeSingleReactive(target: object, key: string, value) {
                     return false;
                 }
             }
-
-            const prevValue = reactiveVariable.value;
-            const isDataChanged = prevValue !== v;
 
             if (isDataChanged) {
                 reactiveVariable.value = v;
