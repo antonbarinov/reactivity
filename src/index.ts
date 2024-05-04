@@ -176,7 +176,6 @@ export function makeSingleReactive(target: object, key: string, value) {
                 let problemFnBody = effectFn.__effectBody || effectFn;
 
                 const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
-                pair.__circularMark = true;
                 if (isDataChanged) {
                     pair.__circularCalls ??= -1;
                     pair.__circularCalls++;

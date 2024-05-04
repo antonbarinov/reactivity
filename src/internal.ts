@@ -12,7 +12,6 @@ export interface IPairedEffectFnWithReactiveVariable {
     __subscribedValue: any;
 
     __circularCalls: number;
-    __circularMark: boolean;
 }
 
 export interface IReactiveVariable {
