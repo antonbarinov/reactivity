@@ -176,13 +176,11 @@ export function makeSingleReactive(target: object, key: string, value) {
                 let problemFnBody = effectFn.__effectBody || effectFn;
 
                 const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
-                if (isDataChanged) {
-                    pair.__circularCalls ??= -1;
-                    pair.__circularCalls++;
-                }
+                pair.__circularCalls ??= 0;
+                if (isDataChanged) pair.__circularCalls++;
 
                 // Circular dependency previously was marked
-                if (pair.__circularCalls > 0) {
+                if (pair.__circularCalls > 1) {
                     disposeEffect(effectFn);
 
                     console.error('Circular dependency changes detected in:');
