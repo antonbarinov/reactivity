@@ -1,7 +1,7 @@
 {
-  "strict": false,
   "include": ["./src", "./src_tests", "./vite_plugins"],
   "compilerOptions": {
+    "strict": false,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "removeComments": true,
     "skipLibCheck": true,

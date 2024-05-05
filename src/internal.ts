@@ -251,7 +251,9 @@ function executeEffects() {
 }
 
 let execBatchedReactionsInProgress = false;
-export function dataChanged(reactiveVariable: IReactiveVariable) {
+export function dataChanged(reactiveVariable: IReactiveVariable, forceUpdate = false) {
+    if (forceUpdate) reactiveVariable.forceUpdate = forceUpdate;
+
     // Computed functions watchers
     computedFunctionsWatchersCheck(reactiveVariable);
 

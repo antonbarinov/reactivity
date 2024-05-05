@@ -83,8 +83,7 @@ export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | '
 
             reactiveVariablesSize.value++;
             dataChanged(reactiveVariablesSize);
-
-            dataChanged(reactiveVariable);
+            dataChanged(reactiveVariable, true);
             dataChanged(rv);
         }
     };
@@ -108,7 +107,7 @@ export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | '
 
         // Data changed
         if (changed) {
-            dataChanged(reactiveVariable);
+            dataChanged(reactiveVariable, true);
             dataChanged(rv);
         }
     };
@@ -129,7 +128,7 @@ export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | '
             reactiveVariablesSize.value = 0;
             dataChanged(reactiveVariablesSize);
 
-            dataChanged(reactiveVariable);
+            dataChanged(reactiveVariable, true);
 
             reactiveVariable.mapSetVars.forEach((rv, key) => {
                 rv.value = false;
@@ -147,7 +146,7 @@ export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | '
             reactiveVariablesSize.value--;
             dataChanged(reactiveVariablesSize);
 
-            dataChanged(reactiveVariable);
+            dataChanged(reactiveVariable, true);
 
             const rv = registerMapSetReactiveVar(reactiveVariable, value, type);
             rv.value = false;
@@ -208,5 +207,6 @@ Array.from = function(arr) {
     if (arr.__reactiveVariable) {
         subscribe(arr.__reactiveVariable);
     }
-    return arrayFrom(arr);
+
+    return arrayFrom.apply(this, arguments);
 }

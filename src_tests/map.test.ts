@@ -25,6 +25,8 @@ describe('map', () => {
         let mapVal;
         let mapValChangedTimes = -1;
 
+        let arrayFromTimes = -1;
+
         autorun(() => {
             mapValChangedTimes++;
             mapVal = test.map.get(obj1);
@@ -33,6 +35,12 @@ describe('map', () => {
         autorun(() => {
             sizeChangedTimes++;
             size = test.map.size;
+        });
+
+        autorun(() => {
+            arrayFromTimes++;
+            Array.from(test.map);
+            //test.map.values();
         });
 
         assert.equal(size, 0);
@@ -75,5 +83,6 @@ describe('map', () => {
         await sleep(1);
         assert.equal(sizeChangedTimes, 2);
         assert.equal(mapValChangedTimes, 3);
+        assert.equal(arrayFromTimes, 3);
     })
 })
