@@ -18,47 +18,42 @@ describe('arrays', () => {
         const test = new Test();
 
         let res = [];
-        let index = 0;
-        function next() {
-            return res[index++];
-        }
-
         autorun(() => {
-            res.push(JSON.parse(JSON.stringify(test.arr)));
+            res = JSON.parse(JSON.stringify(test.arr));
         });
 
         test.arr.push(4);
 
-        assert.deepEqual(next(), [1,2,3]);
+        assert.deepEqual(res, [1,2,3]);
 
         await reactionsExecuted();
-        assert.deepEqual(next(), [1,2,3,4]);
+        assert.deepEqual(res, [1,2,3,4]);
 
         test.arr.push(5);
         test.arr.pop();
         test.arr.pop();
 
         await reactionsExecuted();
-        assert.deepEqual(next(), [1,2,3]);
+        assert.deepEqual(res, [1,2,3]);
 
         test.arr = null;
 
         await reactionsExecuted();
-        assert.deepEqual(next(), null);
+        assert.deepEqual(res, null);
 
         test.arr = [1];
 
         await reactionsExecuted();
-        assert.deepEqual(next(), [1]);
+        assert.deepEqual(res, [1]);
 
         test.arr.push(2);
 
         await reactionsExecuted();
-        assert.deepEqual(next(), [1, 2]);
+        assert.deepEqual(res, [1, 2]);
 
         test.arr.shift();
 
         await reactionsExecuted();
-        assert.deepEqual(next(), [2]);
+        assert.deepEqual(res, [2]);
     })
 })

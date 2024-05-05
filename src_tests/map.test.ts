@@ -20,15 +20,10 @@ describe('map', () => {
         const test = new Test();
 
         let size = 0;
-        const mapVal = [];
-
-        let index = 0;
-        function next() {
-            return mapVal[index++]
-        }
+        let mapVal;
 
         autorun(() => {
-            mapVal.push(test.map.get(obj1));
+            mapVal = test.map.get(obj1);
         });
 
         autorun(() => {
@@ -36,7 +31,7 @@ describe('map', () => {
         });
 
         assert.equal(size, 0);
-        assert.equal(next(), undefined);
+        assert.equal(mapVal, undefined);
 
         test.map.set(obj2, '1');
         test.map.set(obj2, '2');
@@ -45,19 +40,19 @@ describe('map', () => {
 
         await reactionsExecuted();
         assert.equal(size, 2);
-        assert.equal(next(), '5');
+        assert.equal(mapVal, '5');
 
         test.map.set(obj1, '2');
 
         await reactionsExecuted();
         assert.equal(size, 2);
-        assert.equal(next(), '2');
+        assert.equal(mapVal, '2');
 
         test.map.set(obj1, '3');
         test.map.clear();
 
         await reactionsExecuted();
         assert.equal(size, 0);
-        assert.equal(next(), undefined);
+        assert.equal(mapVal, undefined);
     })
 })
