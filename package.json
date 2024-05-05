@@ -11,16 +11,21 @@
     "start": "cross-env NODE_ENV=development cross-env DEV_SERVER=true concurrently --raw --kill-others \"npm run tscWatch\" \"npm run dev\"",
     "tscWatch": "tsc --noEmit --watch",
     "tsc": "tsc",
-    "types": "tsc --emitDeclarationOnly --outDir \"./dist\""
+    "types": "tsc --emitDeclarationOnly --outDir \"./dist\"",
+    "test": "vitest --pool=forks",
+    "test:ui": "vitest --pool=forks --ui",
+    "test:run": "vitest run --pool=forks"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^18.13.0",
     "@types/react": "^18.0.28",
+    "@vitest/ui": "^1.6.0",
     "concurrently": "^7.6.0",
     "cross-env": "^7.0.3",
     "typescript": "^5.4.5",
-    "vite": "^4.5.3"
+    "vite": "^4.5.3",
+    "vitest": "^1.6.0"
   }
 }

@@ -189,6 +189,29 @@ export function executeReactiveVariables() {
     executeEffects();
 }
 
+function getPromise<T = any, RejT = any>() {
+    let resolve: (value: T) => any = null;
+    let reject: (reason?: RejT) => any = null;
+    const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+
+    return {
+        promise,
+        resolve,
+        reject,
+    }
+}
+
+let execPromiseWatchers = 0;
+let execPromise = getPromise();
+
+export function reactionsExecuted() {
+    execPromiseWatchers++;
+    return execPromise.promise;
+}
+
 export function executeSyncSingleReactiveVariable(reactiveVariable: IReactiveVariable) {
     reactiveVariable.subscribers.forEach((effectFn) => {
         reactiveSubscribe.executedEffect = effectFn;
@@ -198,6 +221,12 @@ export function executeSyncSingleReactiveVariable(reactiveVariable: IReactiveVar
 
     // Remove from async auto batch queue because sync reaction right now
     reactiveVariablesChangedQueue.delete(reactiveVariable);
+
+    if (execPromiseWatchers > 0) {
+        execPromise.resolve(true);
+        execPromise = getPromise();
+        execPromiseWatchers--;
+    }
 }
 
 function executeEffects() {
@@ -213,6 +242,12 @@ function executeEffects() {
     reactiveSubscribe.executedEffect = null;
 
     effectsToExec.clear();
+
+    if (execPromiseWatchers > 0) {
+        execPromise.resolve(true);
+        execPromise = getPromise();
+        execPromiseWatchers--;
+    }
 }
 
 let execBatchedReactionsInProgress = false;
