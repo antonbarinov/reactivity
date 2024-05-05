@@ -20,13 +20,18 @@ describe('map', () => {
         const test = new Test();
 
         let size = 0;
+        let sizeChangedTimes = -1;
+
         let mapVal;
+        let mapValChangedTimes = -1;
 
         autorun(() => {
+            mapValChangedTimes++;
             mapVal = test.map.get(obj1);
         });
 
         autorun(() => {
+            sizeChangedTimes++;
             size = test.map.size;
         });
 
@@ -54,5 +59,21 @@ describe('map', () => {
         await reactionsExecuted();
         assert.equal(size, 0);
         assert.equal(mapVal, undefined);
+
+        // nothing changed
+        test.map.set(obj1, '3');
+        test.map.delete(obj1);
+
+        await sleep(1);
+        assert.equal(sizeChangedTimes, 2);
+        assert.equal(mapValChangedTimes, 3);
+
+        // nothing changed
+        test.map.set(obj1, '3');
+        test.map.clear();
+
+        await sleep(1);
+        assert.equal(sizeChangedTimes, 2);
+        assert.equal(mapValChangedTimes, 3);
     })
 })
