@@ -72,6 +72,7 @@ describe('map', () => {
         test.map.set(obj1, '3');
         test.map.delete(obj1);
 
+        // use sleep because reaction won't be executed and reactionsExecuted() will not be fired
         await sleep(1);
         assert.equal(sizeChangedTimes, 2);
         assert.equal(mapValChangedTimes, 3);
@@ -80,6 +81,7 @@ describe('map', () => {
         test.map.set(obj1, '3');
         test.map.clear();
 
+        // use sleep because reaction won't be executed and reactionsExecuted() will not be fired
         await sleep(1);
         assert.equal(sizeChangedTimes, 2);
         assert.equal(mapValChangedTimes, 3);

@@ -73,6 +73,7 @@ describe('set', () => {
         test.set.add(obj1);
         test.set.delete(obj1);
 
+        // use sleep because reaction won't be executed and reactionsExecuted() will not be fired
         await sleep(1);
         assert.equal(mapValChangedTimes, 2);
         assert.equal(sizeChangedTimes, 5);
@@ -81,7 +82,7 @@ describe('set', () => {
         test.set.add(obj1);
         test.set.clear();
 
-        await sleep(1);
+        await reactionsExecuted();
         assert.equal(mapValChangedTimes, 2);
         assert.equal(sizeChangedTimes, 6);
 
@@ -90,6 +91,7 @@ describe('set', () => {
         test.set.add(obj1);
         test.set.clear();
 
+        // use sleep because reaction won't be executed and reactionsExecuted() will not be fired
         await sleep(1);
         assert.equal(mapValChangedTimes, 2);
         assert.equal(sizeChangedTimes, 6);
