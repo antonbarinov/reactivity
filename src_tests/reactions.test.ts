@@ -103,4 +103,78 @@ describe('reactions', () => {
         assert.equal(reaction1Calls, 3);
         assert.equal(reaction2Calls, 1);
     })
+
+    it('dispose check', async () => {
+        class Test {
+            value = 1;
+
+            constructor() {
+                reactive(this);
+                markSynchronousReactions(this, 'value');
+            }
+        }
+
+        const test = new Test();
+
+        let reactionCalls = 0;
+
+        const disposer = reaction(() => [test.value], () => {
+            reactionCalls++;
+        })
+
+        assert.equal(reactionCalls, 0);
+
+        disposer();
+        test.value++;
+        assert.equal(reactionCalls, 0);
+
+        reaction(() => [test.value], (disp) => {
+            reactionCalls++;
+            disp();
+        })
+
+        test.value++;
+        assert.equal(reactionCalls, 1);
+
+        test.value++;
+        assert.equal(reactionCalls, 1);
+    })
+
+    it('dispose check #2', async () => {
+        class Test {
+            value = 1;
+
+            constructor() {
+                reactive(this);
+                markSynchronousReactions(this, 'value');
+            }
+        }
+
+        const test = new Test();
+
+        let reactionCalls = 0;
+
+        const disposer = autorun(() => {
+            const a = test.value;
+            reactionCalls++;
+        })
+
+        assert.equal(reactionCalls, 1);
+
+        disposer();
+        test.value++;
+        assert.equal(reactionCalls, 1);
+
+        autorun((disp) => {
+            const a = test.value;
+            reactionCalls++;
+            disp();
+        })
+
+        test.value++;
+        assert.equal(reactionCalls, 2);
+
+        test.value++;
+        assert.equal(reactionCalls, 2);
+    })
 })
