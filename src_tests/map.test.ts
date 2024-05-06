@@ -86,5 +86,12 @@ describe('map', () => {
         assert.equal(sizeChangedTimes, 2);
         assert.equal(mapValChangedTimes, 3);
         assert.equal(arrayFromTimes, 3);
+
+        // nothing changed
+        test.map.set(obj1, '3');
+        test.map.delete(obj1);
+
+        await sleep(1);
+        assert.equal(arrayFromTimes, 3);
     })
 })

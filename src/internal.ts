@@ -174,10 +174,15 @@ export function executeReactiveVariables() {
         reactiveVariable.subscribers.forEach((effectFn) => {
             const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
 
-            // Если на момент подписки значение изменилось, тогда вызовем реакцию
-            if (pair.__subscribedValue !== value || reactiveVariable.forceUpdate) {
-                pair.__subscribedValue = value;
+            // [[[for new Map() and new Set() only]]]
+            if (reactiveVariable.mapSetVars) {
                 effectsToExec.add(effectFn);
+            } else {
+                // Если на момент подписки значение изменилось, тогда вызовем реакцию
+                if (pair.__subscribedValue !== value || reactiveVariable.forceUpdate) {
+                    pair.__subscribedValue = value;
+                    effectsToExec.add(effectFn);
+                }
             }
         });
 
