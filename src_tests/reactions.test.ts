@@ -177,4 +177,30 @@ describe('reactions', () => {
         test.value++;
         assert.equal(reactionCalls, 2);
     })
+
+    it('circular dep', async () => {
+        class Test {
+            value = 1;
+
+            constructor() {
+                reactive(this);
+                markSynchronousReactions(this, 'value');
+            }
+        }
+
+        const test = new Test();
+
+        let reactionCalls = 0;
+
+        autorun((disposeFn) => {
+            test.value++;
+            reactionCalls++;
+
+            if (reactionCalls > 5) {
+                disposeFn();
+            }
+        })
+
+        assert.equal(reactionCalls, 2);
+    })
 })
