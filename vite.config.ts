@@ -35,7 +35,7 @@ const config = defineConfig(({ command, mode, ssrBuild }) => ({
         alias: generateResolvers(),
     },
     plugins: [
-        typingsGenerationPlugin(mode),
+        typingsGenerationPlugin(command, mode),
     ]
 } as UserConfig));
 

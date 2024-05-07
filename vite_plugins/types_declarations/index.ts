@@ -1,4 +1,4 @@
-import { Plugin } from 'vite';
+import { ConfigEnv, Plugin } from 'vite';
 import * as path from 'path';
 import fs from 'fs';
 import { exec } from 'child_process';
@@ -9,7 +9,7 @@ let baseUrl = '';
 let outDir = '';
 
 
-export function typingsGenerationPlugin(mode: string) {
+export function typingsGenerationPlugin(command: ConfigEnv['command'], mode: ConfigEnv['mode']) {
     return [
         {
             name: 'vite:typings-generation-plugin:post',
@@ -19,6 +19,8 @@ export function typingsGenerationPlugin(mode: string) {
                 outDir = config.build.outDir;
             },
             buildEnd() {
+                if (command !== 'build') return;
+
                 const typingsDir = `./${outDir}/__typings__`;
                 exec(`tsc --emitDeclarationOnly --outDir "${typingsDir}"`, (er, out, e) => {
                     fs.cpSync(`${typingsDir}/src`, `./${outDir}`, { recursive: true });
