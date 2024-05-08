@@ -28,6 +28,11 @@ describe('computed', () => {
         assert.equal(test.double, c * 2);
         assert.equal(test.double, c * 2);
         assert.equal(getterCalls, 1);
+
+        test.counter = ++c;
+        assert.equal(test.double, c * 2);
+        assert.equal(test.double, c * 2);
+        assert.equal(getterCalls, 2);
     })
 
     it('cross computed check', () => {
