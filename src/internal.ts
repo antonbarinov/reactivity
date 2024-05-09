@@ -194,7 +194,7 @@ export function executeReactiveVariables() {
     executeEffects();
 }
 
-function getPromise<T = any, RejT = any>() {
+function createPromise<T = any, RejT = any>() {
     let resolve: (value: T) => any = null;
     let reject: (reason?: RejT) => any = null;
     const promise = new Promise<T>((res, rej) => {
@@ -210,7 +210,7 @@ function getPromise<T = any, RejT = any>() {
 }
 
 let execPromiseWatchers = 0;
-let execPromise = getPromise();
+let execPromise = createPromise();
 
 export function reactionsExecuted() {
     execPromiseWatchers++;
@@ -229,7 +229,7 @@ export function executeSyncSingleReactiveVariable(reactiveVariable: IReactiveVar
 
     if (execPromiseWatchers > 0) {
         execPromise.resolve(true);
-        execPromise = getPromise();
+        execPromise = createPromise();
         execPromiseWatchers--;
     }
 }
@@ -250,7 +250,7 @@ function executeEffects() {
 
     if (execPromiseWatchers > 0) {
         execPromise.resolve(true);
-        execPromise = getPromise();
+        execPromise = createPromise();
         execPromiseWatchers--;
     }
 }
