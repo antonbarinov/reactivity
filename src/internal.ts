@@ -217,26 +217,11 @@ export function reactionsExecuted() {
     return execPromise.promise;
 }
 
-export function executeSyncSingleReactiveVariable(reactiveVariable: IReactiveVariable) {
-    reactiveVariable.subscribers.forEach((effectFn) => {
-        reactiveSubscribe.executedEffect = effectFn;
-        effectFn();
-        reactiveSubscribe.executedEffect = null;
-    });
+function executeEffects(reactiveVariable?: IReactiveVariable) {
+    const effects = reactiveVariable?.subscribers || effectsToExec;
 
-    // Remove from async auto batch queue because sync reaction right now
-    reactiveVariablesChangedQueue.delete(reactiveVariable);
-
-    if (execPromiseWatchers > 0) {
-        execPromise.resolve(true);
-        execPromise = createPromise();
-        execPromiseWatchers--;
-    }
-}
-
-function executeEffects() {
     try {
-        effectsToExec.forEach((effectFn) => {
+        effects.forEach((effectFn) => {
             reactiveSubscribe.executedEffect = effectFn;
             effectFn();
             reactiveSubscribe.executedEffect = null;
@@ -246,7 +231,7 @@ function executeEffects() {
     }
     reactiveSubscribe.executedEffect = null;
 
-    effectsToExec.clear();
+    if (!reactiveVariable) effectsToExec.clear();
 
     if (execPromiseWatchers > 0) {
         execPromise.resolve(true);
@@ -263,7 +248,7 @@ export function dataChanged(reactiveVariable: IReactiveVariable, forceUpdate = f
     computedFunctionsWatchersCheck(reactiveVariable);
 
     if (reactiveSubscribe.syncMode || reactiveVariable.syncReactions) {
-        executeSyncSingleReactiveVariable(reactiveVariable);
+        executeEffects(reactiveVariable);
     } else {
         pushReaction(reactiveVariable);
 
