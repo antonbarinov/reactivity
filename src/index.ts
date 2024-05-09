@@ -9,6 +9,7 @@ import {
 } from './internal';
 
 import { setObservableMapSet } from './set';
+import * as process from 'process';
 
 const arrayPrototypes = {
     'push': Array.prototype.push,
@@ -183,15 +184,17 @@ export function makeSingleReactive(target: object, key: string, value) {
                 if (pair.__circularCalls > 1) {
                     disposeEffect(effectFn);
 
-                    console.error('Circular dependency changes detected in:');
-                    console.trace(problemFnBody);
-                    console.error(
-                        'Also this effect ^ was disposed',
-                        '\r\n',
-                        'target:', target,
-                        '\r\n',
-                        'key:', key,
-                    );
+                    if (!process.env.VITEST) {
+                        console.error('Circular dependency changes detected in:');
+                        console.trace(problemFnBody);
+                        console.error(
+                            'Also this effect ^ was disposed',
+                            '\r\n',
+                            'target:', target,
+                            '\r\n',
+                            'key:', key,
+                        );
+                    }
 
                     return false;
                 }
