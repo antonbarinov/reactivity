@@ -2,9 +2,9 @@
   "name": "reactivity_v4",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
-  "source": "src/index.ts",
-  "module": "dist/index.mjs",
+  "main": "index.js",
+  "module": "index.mjs",
+  "types": "index.d.ts",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

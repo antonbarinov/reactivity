@@ -12,6 +12,7 @@ process.env.NODE_ENV ??= 'development';
 const config = defineConfig(({ command, mode, ssrBuild }) => ({
     build: {
         target: 'es2018',
+        modulePreload: false,
         lib: {
             formats: ['cjs', 'es'],
             entry: [
