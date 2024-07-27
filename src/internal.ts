@@ -47,6 +47,7 @@ export interface IReactiveVariable {
     dependenciesChanged?: boolean;
     // computed функции подписанные на изменение этой реактивной переменной
     computedWatchers?: Set<IReactiveVariable>;
+    isComputed?: boolean;
     /**
      * Computed only section -- END
      * */
@@ -65,7 +66,7 @@ export function computedFunctionsWatchersCheck(reactiveVariable: IReactiveVariab
         r?.computedWatchers?.forEach((dep) => {
             dep.dependenciesChanged = true; // Used in computed only
             // Значение computed реактивной переменной ещё не изменилось т.к. её ещё не читали, поэтому чтобы реакции понимали что значение на момент подписки изменилось меняем это значение
-            dep.value = {};
+            //dep.value = {};
 
             pushReaction(dep);
             check(dep);
@@ -182,7 +183,7 @@ export function executeReactiveVariables() {
                 effectsToExec.add(effectFn);
             } else {
                 // Если на момент подписки значение изменилось, тогда вызовем реакцию
-                if (pair.__subscribedValue !== value || reactiveVariable.forceUpdate) {
+                if (pair.__subscribedValue !== value || reactiveVariable.forceUpdate || reactiveVariable.dependenciesChanged) {
                     pair.__subscribedValue = value;
                     effectsToExec.add(effectFn);
                 }
@@ -294,6 +295,7 @@ export function computedInfo(target: object, key: string) {
             subscribers: new Set(),
             parentTarget: target,
             key,
+            isComputed: true,
         };
 
         data.firstExec = false;
