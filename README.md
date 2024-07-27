@@ -13,10 +13,16 @@ import { reactive, autorun, markSynchronousReactions } from 'reactive';
 class State {
     counter = 0;
     syncCounter = 0;
+    computedCounter = 1;
 
     constructor() {
         reactive(this);
         markSynchronousReactions(this, 'syncCounter');
+    }
+    
+    get computedValue() {
+        console.log('computed calulation');
+        return this.computedCounter * 2;
     }
 
     incr = () => {
@@ -44,4 +50,12 @@ setInterval(() => {
     state.incr();
     state.incr();
 }, 500);
+
+console.log('computedValue', state.computedValue);
+console.log('computedValue', state.computedValue);
+console.log('computedValue', state.computedValue);
+state.computedCounter++;
+console.log('computedValue', state.computedValue);
+console.log('computedValue', state.computedValue);
+console.log('computedValue', state.computedValue);
 ```
