@@ -5,7 +5,6 @@ Reactivity library based on getters/setters, auto-batching, async reactions (by 
 - Auto subscribe/unsubscribe.
 - Auto batching synchronous changes.
 - Minimum possible code.
-- Circular dependencies runtime check
 
 ## Quick example
 ```javascript

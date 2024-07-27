@@ -177,7 +177,7 @@ describe('reactions', () => {
         test.value++;
         assert.equal(reactionCalls, 2);
     })
-
+    /*
     it('circular dep', async () => {
         class Test {
             value = 1;
@@ -202,5 +202,5 @@ describe('reactions', () => {
         })
 
         assert.equal(reactionCalls, 2);
-    })
+    })*/
 })

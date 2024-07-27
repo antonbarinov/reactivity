@@ -64,6 +64,9 @@ export function computedFunctionsWatchersCheck(reactiveVariable: IReactiveVariab
     function check(r: IReactiveVariable) {
         r?.computedWatchers?.forEach((dep) => {
             dep.dependenciesChanged = true; // Used in computed only
+            // Значение computed реактивной переменной ещё не изменилось т.к. её ещё не читали, поэтому чтобы реакции понимали что значение на момент подписки изменилось меняем это значение
+            dep.value = {};
+
             pushReaction(dep);
             check(dep);
         });

@@ -1,4 +1,5 @@
-import { autorun, reaction, reactive, when } from '../src';
+import { autorun, reaction, reactive, when,  } from '../src';
+import { reactionsExecuted } from '../src/internal';
 import { sleep } from './helpers';
 import { assert, describe, expect, it } from 'vitest'
 
@@ -80,5 +81,49 @@ describe('computed', () => {
         assert.equal(test.quadro, c * 4);
         assert.equal(getterCalls1, 2);
         assert.equal(getterCalls2, 2);
+    })
+
+    it('reactions on computed', async () => {
+        let getterCalls = 0;
+        let reactionsCount = 0;
+
+        class Test {
+            counter = 1;
+
+            constructor(c = 1) {
+                reactive(this);
+                this.counter = c;
+            }
+
+            get double() {
+                getterCalls++;
+                return this.counter * 2;
+            }
+        }
+
+        let c = 1;
+
+        const test = new Test(c);
+
+        autorun(() => {
+            reactionsCount++;
+            let a = test.double;
+        });
+
+        autorun(() => {
+            reactionsCount++;
+            let a = test.double;
+        });
+
+        autorun(() => {
+            reactionsCount++;
+            let a = test.double;
+        });
+
+        test.counter++;
+
+        await reactionsExecuted();
+
+        assert.equal(reactionsCount, 6);
     })
 })
