@@ -9,7 +9,6 @@ import {
 } from './internal';
 
 import { setObservableMapSet } from './set';
-import * as process from 'process';
 
 const arrayPrototypes = {
     'push': Array.prototype.push,
