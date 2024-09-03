@@ -172,7 +172,6 @@ export function makeSingleReactive(target: object, key: string, value) {
             const isDataChanged = prevValue !== v;
 
             // Circular dependency check
-
             if (effectFn && effectFn.__subscribedTo?.has(reactiveVariable)) {
                 let problemFnBody = effectFn.__effectBody || effectFn;
 
