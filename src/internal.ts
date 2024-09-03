@@ -275,6 +275,7 @@ function checkAsyncCircularDep() {
     const pairs = new Set<IPairedEffectFnWithReactiveVariable>();
 
     Promise.resolve().then(() => {
+        // Наполняет пары ReactiveVariable и EffectFn которые успели встать на очередь выполнение реакций
         reactiveVariablesChangedQueue.forEach((rv) => {
             rv.subscribers.forEach((subscriberFn) => {
                 const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(subscriberFn, rv);
@@ -283,6 +284,7 @@ function checkAsyncCircularDep() {
         });
 
         circularPairsSet.forEach((circularPair) => {
+            // Если последние заподозренные пары на циклическую зависимость не попали в список который мы собрали в pairs, то считаем что подозрение было ложным и сбрасываем счетчик у пары
             if (!pairs.has(circularPair)) {
                 circularPair.__circularCalls = 0;
                 circularPairsSet.delete(circularPair);
