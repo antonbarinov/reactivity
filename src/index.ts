@@ -5,7 +5,7 @@ import {
     IReactiveVariable,
     EnhFunction,
     setReactiveVariableInMap,
-    dataChanged, computedInfo, getPairObj, IPairedEffectFnWithReactiveVariable,
+    dataChanged, computedInfo, getPairObj, IPairedEffectFnWithReactiveVariable, circularPairsSet,
 } from './internal';
 
 import { setObservableMapSet } from './set';
@@ -172,13 +172,14 @@ export function makeSingleReactive(target: object, key: string, value) {
             const isDataChanged = prevValue !== v;
 
             // Circular dependency check
-            /*
+
             if (effectFn && effectFn.__subscribedTo?.has(reactiveVariable)) {
                 let problemFnBody = effectFn.__effectBody || effectFn;
 
                 const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
                 pair.__circularCalls ??= 0;
                 if (isDataChanged) pair.__circularCalls++;
+                circularPairsSet.add(pair);
 
                 // Circular dependency previously was marked
                 if (pair.__circularCalls > 1) {
@@ -194,11 +195,12 @@ export function makeSingleReactive(target: object, key: string, value) {
                             '\r\n',
                             'key:', key,
                         );
+                        console.log(reactiveVariable);
                     }
 
                     return false;
                 }
-            }*/
+            }
 
             if (isDataChanged) {
                 reactiveVariable.value = v;

@@ -263,9 +263,32 @@ export function dataChanged(reactiveVariable: IReactiveVariable, forceUpdate = f
             setTimeout(() => {
                 execBatchedReactionsInProgress = false;
                 executeReactiveVariables();
+                checkAsyncCircularDep();
             });
         }
     }
+}
+
+export const circularPairsSet = new Set<IPairedEffectFnWithReactiveVariable>();
+
+function checkAsyncCircularDep() {
+    const pairs = new Set<IPairedEffectFnWithReactiveVariable>();
+
+    Promise.resolve().then(() => {
+        reactiveVariablesChangedQueue.forEach((rv) => {
+            rv.subscribers.forEach((subscriberFn) => {
+                const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(subscriberFn, rv);
+                pairs.add(pair);
+            })
+        });
+
+        circularPairsSet.forEach((circularPair) => {
+            if (!pairs.has(circularPair)) {
+                circularPair.__circularCalls = 0;
+                circularPairsSet.delete(circularPair);
+            }
+        })
+    })
 }
 
 // Проверка были ли изменения в new Set() и new Map()
