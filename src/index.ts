@@ -184,7 +184,8 @@ export function makeSingleReactive(target: object, key: string, value) {
                 if (pair.__circularCalls > 1) {
                     disposeEffect(effectFn);
 
-                    if (!process.env.VITEST) {
+                    // @ts-ignore
+                    if (!__VITEST__) {
                         console.error('Circular dependency changes detected in:');
                         console.trace(problemFnBody);
                         console.error(
@@ -219,6 +220,10 @@ export function makeSingleReactive(target: object, key: string, value) {
 }
 const alreadyReactive = new WeakSet();
 
+interface ILastReadFn {
+    value: AnyFn;
+    context: object;
+}
 
 export function reactive<T extends object, K extends keyof T>(target: T, annotations?: K[], ignore?: boolean) {
     if (alreadyReactive.has(target)) return target;
@@ -238,6 +243,21 @@ export function reactive<T extends object, K extends keyof T>(target: T, annotat
         } else if (descriptor.set) {
         } else if (typeof target[key] !== 'function') {
             makeSingleReactive(target, key, target[key]);
+        } else if (typeof target[key] === 'function') {
+            const fn: ILastReadFn = {
+                value: target[key] as AnyFn,
+                context: target
+            };
+
+            Object.defineProperty(target, key, {
+                get() {
+                    lastReadFn = fn;
+                    return fn.value;
+                },
+                set(v) {
+                    fn.value = v;
+                },
+            });
         }
     }
 
@@ -368,45 +388,41 @@ function sleep(ms = 0) {
 type AnyFn = (...args: any[]) => any;
 
 const actionListeners = new WeakMap<AnyFn, Set<AnyFn>>();
+let lastReadFn: ILastReadFn = null;
 
 export function actionSubscribe(action: AnyFn, cb: AnyFn) {
-    let listeners = actionListeners.get(action);
-    if (!listeners) {
-        listeners = new Set<AnyFn>();
-        actionListeners.set(action, listeners);
+    if (!lastReadFn || lastReadFn.value !== action) {
+        throw new Error(`Can't subscribe to function: ${action}\r\n Check that is arrow function and reactive`);
     }
 
+    if (actionListeners.has(action)) {
+        const listeners = actionListeners.get(action);
+        listeners.add(cb);
+
+        return () => actionUnsubscribe(action, cb);
+    }
+
+    const fn = lastReadFn.value;
+    const fnContext = lastReadFn.context;
+
+    const wrapper = () => {
+        const listeners = actionListeners.get(wrapper);
+        listeners.forEach((cb) => cb());
+
+        return fn.apply(fnContext, arguments);
+    }
+
+    lastReadFn.value = wrapper;
+
+    const listeners = new Set<AnyFn>();
+    actionListeners.set(wrapper, listeners);
     listeners.add(cb);
 
-    return () => actionUnsubscribe(action, cb);
+    return () => actionUnsubscribe(wrapper, cb);
 }
 
 export function actionUnsubscribe(action: AnyFn, cb: AnyFn) {
     const listeners = actionListeners.get(action);
     if (listeners) listeners.delete(cb);
 }
-
-export function decorateActions(context: object) {
-    const constructorName = context.constructor.name;
-
-    for (const k in context) {
-        const val = context[k];
-        if (typeof val === 'function') {
-            function wrapper() {
-                //console.log(`${constructorName}.${k} executed`);
-
-                const listeners = actionListeners.get(context[k]);
-
-                if (listeners) {
-                    listeners.forEach((cb) => cb());
-                }
-
-                return val.apply(this, arguments);
-            }
-
-            context[k] = wrapper;
-        }
-    }
-}
-
 

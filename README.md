@@ -5,11 +5,12 @@ Reactivity library based on getters/setters, auto-batching, async reactions (by 
 - Auto subscribe/unsubscribe.
 - Auto batching synchronous changes.
 - Minimum possible code.
-- Circular dependencies detection
+- Circular dependencies detection.
+- Ability to subscribe on actions/functions call.
 
 ## Quick example
 ```javascript
-import { reactive, autorun, markSynchronousReactions } from 'reactive';
+import { reactive, autorun, markSynchronousReactions, actionSubscribe } from 'reactive';
 
 class State {
     counter = 0;
@@ -46,6 +47,10 @@ autorun(() => {
 autorun(() => {
     console.log('counter', state.counter);
 });
+
+actionSubscribe(state.incr, () => {
+    console.log(`state.incr() was called`);
+})
 
 setInterval(() => {
     state.incr();

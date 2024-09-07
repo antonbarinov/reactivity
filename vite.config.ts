@@ -27,9 +27,14 @@ const config = defineConfig(({ command, mode, ssrBuild }) => ({
     server: {
         host: '0.0.0.0',
     },
+    test: {
+        globals: true,
+        environment: 'jsdom',
+    },
 
     define: {
         '__NODE_ENV__': `'${process.env.NODE_ENV}'`,
+        '__VITEST__': `'${process.env.VITEST}'`,
     },
 
     resolve: {

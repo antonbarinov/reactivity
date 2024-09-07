@@ -1,7 +1,5 @@
-import { autorun, reaction, reactive, when } from '../src';
+import { autorun, reaction, reactive, when, actionSubscribe } from '../src';
 import { sleep } from './helpers';
-
-
 
 class Test {
     counter = 1;
@@ -9,61 +7,23 @@ class Test {
     constructor() {
         reactive(this);
     }
+
+    test = () => {
+        this.counter++;
+    }
 }
 
 const test = new Test();
 
-const disp1 = reaction(() => test.counter, (disposeFn) => {
-    console.log('reaction #1', test.counter);
-    if (test.counter > 5) {
-        disposeFn();
-    }
+actionSubscribe(test.test, () => {
+    console.log('test called');
 });
 
-// Circular dependency
-const disp2 = reaction(() => test.counter, () => {
-    console.log('reaction #2', test.counter);
-    test.counter++;
+actionSubscribe(test.test, () => {
+    console.log('test called #2');
 });
 
-reaction(() => test.counter, (disposeFn) => {
-    if (test.counter > 6) {
-        console.log('reaction #3', test.counter);
-    }
-});
+test.test();
+test.test();
 
-// Circular dependency
-autorun(() => {
-    console.log('autorun #1', test.counter);
-    test.counter++;
-})
-
-autorun((disposeFn) => {
-    console.log('autorun #2', test.counter);
-    if (test.counter > 5) {
-        disposeFn();
-    }
-})
-
-//disp1();
-
-// also check auto batching
-test.counter++;
-test.counter++;
-
-(async () => {
-    await when(() => test.counter > 10);
-    console.log('text.counter > 10');
-})();
-
-(async () => {
-    await when(() => test.counter > 15);
-    console.log('text.counter > 15');
-})();
-
-setInterval(() => {
-    // also check auto batching
-    test.counter++;
-    test.counter++;
-}, 1000);
-
+console.log(test.counter);
