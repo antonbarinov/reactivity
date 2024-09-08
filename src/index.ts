@@ -60,13 +60,26 @@ export const reactiveSubscribe = new ReactiveSubscribe();
 
 // Sync reactions
 export function markSynchronousReactions<T extends object, K extends keyof T>(target: T, key: K | K[]) {
+    markReactions(target, key, true);
+}
+
+// Sync reactions
+function markReactions<T extends object, K extends keyof T>(target: T, key: K | K[], sync: boolean) {
     if (!Array.isArray(key)) key = [key];
     for (const k of key) {
         const reactiveVariable = getReactiveVariable(target, k);
         if (reactiveVariable) {
-            reactiveVariable.syncReactions = true;
+            reactiveVariable.syncReactions = sync;
+        } else {
+            const computed = computedInfo(target, k as string);
+            computed.reactiveVariable.syncReactions = sync;
         }
     }
+}
+
+// Back to async reactions
+export function unMarkSynchronousReactions<T extends object, K extends keyof T>(target: T, key: K | K[]) {
+    markReactions(target, key, false);
 }
 
 export const reactiveArrays = new WeakMap<object, IReactiveVariable>();

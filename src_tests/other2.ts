@@ -1,29 +1,43 @@
-import { autorun, reaction, reactive, when, actionSubscribe } from '../src';
+import { autorun, reaction, reactive, when, actionSubscribe, markSynchronousReactions } from '../src';
 import { sleep } from './helpers';
+
+let getterCalls = 0;
+let reactionsCount = 0;
 
 class Test {
     counter = 1;
 
-    constructor() {
+    constructor(c = 1) {
         reactive(this);
+        this.counter = c;
+        markSynchronousReactions(this, 'quadro');
     }
 
-    test = () => {
-        this.counter++;
+    get double() {
+        getterCalls++;
+        return this.counter * 2;
+    }
+
+    get quadro() {
+        getterCalls++;
+        return this.double * 2;
     }
 }
 
-const test = new Test();
+let c = 1;
 
-actionSubscribe(test.test, () => {
-    console.log('test called');
+const test = new Test(c);
+
+autorun(() => {
+    reactionsCount++;
+    console.log('test.quadro', test.quadro);
 });
 
-actionSubscribe(test.test, () => {
-    console.log('test called #2');
+autorun(() => {
+    console.log('counter', test.counter);
 });
 
-test.test();
-test.test();
+test.counter++;
+test.counter++;
 
-console.log(test.counter);
+console.log('reactionsCount', reactionsCount)

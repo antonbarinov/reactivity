@@ -1,4 +1,4 @@
 //import './other';
-//import './other2';
+import './other2';
 
 

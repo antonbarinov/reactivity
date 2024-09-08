@@ -1,4 +1,4 @@
-import { autorun, reaction, reactive, when,  } from '../src';
+import { autorun, reaction, reactive, when, markSynchronousReactions  } from '../src';
 import { reactionsExecuted } from '../src/internal';
 import { sleep } from './helpers';
 import { assert, describe, expect, it } from 'vitest'
@@ -125,5 +125,56 @@ describe('computed', () => {
         await reactionsExecuted();
 
         assert.equal(reactionsCount, 6);
+    })
+
+    it('reactions on computed in sync mode', async () => {
+        let getterCalls = 0;
+        let reactionsCount = 0;
+
+        class Test {
+            counter = 1;
+
+            constructor(c = 1) {
+                reactive(this);
+                this.counter = c;
+                markSynchronousReactions(this, 'double');
+            }
+
+            get double() {
+                getterCalls++;
+                return this.counter * 2;
+            }
+        }
+
+        let c = 1;
+
+        const test = new Test(c);
+
+        autorun(() => {
+            reactionsCount++;
+            let a = test.double;
+        });
+
+        autorun(() => {
+            reactionsCount++;
+            let a = test.double;
+        });
+
+        autorun(() => {
+            reactionsCount++;
+            let a = test.double;
+        });
+
+        test.counter++;
+        test.counter++;
+
+        assert.equal(reactionsCount, 9);
+        assert.equal(getterCalls, 3);
+
+        // Проверка чтобы лишних асинхронных реакций не было после отработки синхронных
+        await reactionsExecuted();
+        await sleep(10); // Для перестраховки
+        assert.equal(reactionsCount, 9);
+        assert.equal(getterCalls, 3);
     })
 })

@@ -60,6 +60,8 @@ const effectsToExec = new Set<EnhFunction>();
 // Используется в функции getReactiveVariable
 const reactiveVariablesWeakMap = new WeakMap<object, Map<string, IReactiveVariable>>();
 
+const syncExecInComputedSet = new Set<IReactiveVariable>();
+
 // Пометить computed'ы следящие за реактивной переменной, что ее зависимости изменились чтобы computed функция была вызвана снова
 export function computedFunctionsWatchersCheck(reactiveVariable: IReactiveVariable) {
     function check(r: IReactiveVariable) {
@@ -68,12 +70,24 @@ export function computedFunctionsWatchersCheck(reactiveVariable: IReactiveVariab
             // Значение computed реактивной переменной ещё не изменилось т.к. её ещё не читали, поэтому чтобы реакции понимали что значение на момент подписки изменилось меняем это значение
             //dep.value = {};
 
-            pushReaction(dep);
+            if (dep.syncReactions) {
+                syncExecInComputedSet.add(dep);
+            } else {
+                pushReaction(dep);
+            }
+
             check(dep);
         });
     }
 
     check(reactiveVariable);
+
+    // В случае если были обнаружены computed свойства для которых нужны синхронные реакции, вызываем их
+    syncExecInComputedSet.forEach((dep) => {
+        reactiveVariablesChangedQueue.delete(dep);
+        executeEffects(dep);
+    })
+    syncExecInComputedSet.clear();
 }
 
 export function pushReaction(reactiveVariable: IReactiveVariable) {
@@ -195,6 +209,12 @@ export function executeReactiveVariables() {
 
     reactiveVariablesChangedQueue.clear();
 
+    // Вычищаем эффекты которые были вызваны в ходе синхронных реакций
+    syncEffectsWasExecuted.forEach((effectFn) => {
+        effectsToExec.delete(effectFn);
+    })
+    syncEffectsWasExecuted.clear();
+
     executeEffects();
 }
 
@@ -221,11 +241,19 @@ export function reactionsExecuted() {
     return execPromise.promise;
 }
 
+const syncEffectsWasExecuted = new Set<EnhFunction>();
+
 function executeEffects(reactiveVariable?: IReactiveVariable) {
     const effects = reactiveVariable?.subscribers || effectsToExec;
+    const syncMode = reactiveVariable !== undefined;
 
     try {
         effects.forEach((effectFn) => {
+            if (syncMode) {
+                // Добавим информация о отработанных синхронных реакциях, чтобы они не были вызваны потом асинхронно
+                syncEffectsWasExecuted.add(effectFn);
+            }
+
             reactiveSubscribe.executedEffect = effectFn;
             effectFn();
             reactiveSubscribe.executedEffect = null;
@@ -235,7 +263,7 @@ function executeEffects(reactiveVariable?: IReactiveVariable) {
     }
     reactiveSubscribe.executedEffect = null;
 
-    if (!reactiveVariable) effectsToExec.clear();
+    if (!syncMode) effectsToExec.clear();
 
     if (execPromiseWatchers > 0) {
         execPromise.resolve(true);
