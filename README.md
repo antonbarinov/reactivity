@@ -3,6 +3,7 @@ Reactivity library based on getters/setters, auto-batching, async reactions (by 
 
 ## Main concepts:
 - Zero dependencies.
+- True computed properties.
 - Auto subscribe/unsubscribe.
 - Auto batching synchronous changes.
 - Minimum possible code.
