@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, memo } from 'react';
 import { createReaction, reactiveArrays, reactiveSubscribe } from './index';
-import { subscribe } from './internal';
+import { EnhFunction, subscribe } from './internal';
 
 // Fix react crazy idea with freezing props, that cause bugs in some cases when using truly computed getter functions
 Object.freeze = (o) => o;
@@ -15,9 +15,9 @@ function useForceUpdate() {
 }
 
 export function observer<P extends object>(baseComponent: React.FunctionComponent<P>) {
-    const wrappedComponent = (...args) => {
+    const wrappedComponent = (...args: any[]) => {
         const forceUpdate = useForceUpdate();
-        const reaction = useRef(null);
+        const reaction = useRef<ReturnType<typeof createReaction>>(null);
         useEffect(() => {
             return () => reaction.current?.dispose();
         }, []);
@@ -47,7 +47,7 @@ export function observer<P extends object>(baseComponent: React.FunctionComponen
 
         let output;
         reaction.current.track(() => {
-            output = baseComponent.apply({}, args);
+            output = baseComponent.apply(baseComponent, args);
         });
 
         return output;
