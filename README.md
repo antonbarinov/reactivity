@@ -1,9 +1,12 @@
 # Reactive
-Reactivity library based on getters/setters, auto-batching, async reactions (by default).
+Reactive library based on getters/setters, auto-batching, async reactions (by default).
+Inspired by MobX.
 
 ## Main concepts:
 - Zero dependencies.
 - True computed properties.
+- Lightweight: ~4kb gzip.
+- Very fast.
 - Auto subscribe/unsubscribe.
 - Auto batching synchronous changes.
 - Minimum possible code.
