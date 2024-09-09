@@ -14,10 +14,15 @@ export interface IPairedEffectFnWithReactiveVariable {
     __circularCalls: number;
 }
 
+export interface IPairedComputedWithReactiveVariable {
+    // Значение в момент подписки
+    __subscribedValue: any;
+}
+
 export interface IReactiveVariable {
     // Текущее значение
     value: any;
-    // Предыдущее значение
+    // Предыдущее значение (used in Map / Set only)
     prevValue: any;
     // Подписчики на изменение данной реактивной переменной
     subscribers: Set<EnhFunction>;
@@ -47,6 +52,8 @@ export interface IReactiveVariable {
     dependenciesChanged?: boolean;
     // computed функции подписанные на изменение этой реактивной переменной
     computedWatchers?: Set<IReactiveVariable>;
+    // Реактивные переменные на которые подписана данная computed функция
+    reactiveVariablesInComputed?: Set<IReactiveVariable>;
     isComputed?: boolean;
     /**
      * Computed only section -- END
@@ -66,9 +73,12 @@ const syncExecInComputedSet = new Set<IReactiveVariable>();
 export function computedFunctionsWatchersCheck(reactiveVariable: IReactiveVariable) {
     function check(r: IReactiveVariable) {
         r?.computedWatchers?.forEach((dep) => {
+            // Mark computed that his dependencies has been changes
             dep.dependenciesChanged = true; // Used in computed only
-            // Значение computed реактивной переменной ещё не изменилось т.к. её ещё не читали, поэтому чтобы реакции понимали что значение на момент подписки изменилось меняем это значение
-            //dep.value = {};
+            // When forceUpdate, mark computed to forceUpdate too
+            if (reactiveVariable.forceUpdate) {
+                dep.forceUpdate = true;
+            }
 
             if (dep.syncReactions) {
                 syncExecInComputedSet.add(dep);
@@ -166,21 +176,33 @@ export function subscribe(reactiveVariable: IReactiveVariable) {
         pair.__subscribedValue = reactiveVariable.value;
     }
 
+    /**
+     * Computed subscribe - BEGIN
+     */
     if (computedSubscribe.dependencies.length) {
+        computedSubscribe.currentDependency.reactiveVariablesInComputed ??= new Set<IReactiveVariable>();
         reactiveVariable.computedWatchers ??= new Set<IReactiveVariable>();
+
+        const pair = getPairObj<IPairedComputedWithReactiveVariable>(computedSubscribe.currentDependency, reactiveVariable);
+        pair.__subscribedValue = reactiveVariable.value;
+
         for (const dep of computedSubscribe.dependencies) {
             if (dep.allowComputedSubscribe || dep.allowComputedSubscribe === undefined) {
                 reactiveVariable.computedWatchers.add(dep);
+                dep.reactiveVariablesInComputed.add(reactiveVariable);
             }
         }
     }
+    /**
+     * Computed subscribe - END
+     */
 
     return effectFn;
 }
 
 export function executeReactiveVariables() {
     reactiveVariablesChangedQueue.forEach((reactiveVariable) => {
-        const { value, prevValue } = reactiveVariable;
+        const { value } = reactiveVariable;
 
         // [[[for new Map() and new Set() only]]] Run effect only if value really change after auto batching time (setInterval(executeReactiveVariables))
         if (reactiveVariable.mapSetVars) {
@@ -196,26 +218,50 @@ export function executeReactiveVariables() {
             if (reactiveVariable.mapSetVars) {
                 effectsToExec.add(effectFn);
             } else {
+                //console.log('reactiveVariable.isComputed', reactiveVariable.isComputed);
+                if (reactiveVariable.isComputed) {
+                    // Does dependencies actually change?
+                    if (computedDependenciesIsChanged(reactiveVariable)) {
+                        effectsToExec.add(effectFn);
+                    }
+                }
                 // Если на момент подписки значение изменилось, тогда вызовем реакцию
-                if (pair.__subscribedValue !== value || reactiveVariable.forceUpdate || reactiveVariable.dependenciesChanged) {
+                else if (pair.__subscribedValue !== value || reactiveVariable.forceUpdate || reactiveVariable.dependenciesChanged) {
                     pair.__subscribedValue = value;
                     effectsToExec.add(effectFn);
                 }
             }
         });
 
-        reactiveVariable.forceUpdate = false;
+        if (!reactiveVariable.isComputed) {
+            reactiveVariable.forceUpdate = false;
+        }
     });
 
     reactiveVariablesChangedQueue.clear();
 
-    // Вычищаем эффекты которые были вызваны в ходе синхронных реакций
+    // Вычищаем эффекты, которые были вызваны в ходе синхронных реакций
     syncEffectsWasExecuted.forEach((effectFn) => {
         effectsToExec.delete(effectFn);
     })
     syncEffectsWasExecuted.clear();
 
     executeEffects();
+}
+
+// Does computed dependencies actually change?
+export function computedDependenciesIsChanged(reactiveVariable: IReactiveVariable) {
+    let hasChanges = false;
+    // Does dependencies actually change?
+    reactiveVariable.reactiveVariablesInComputed.forEach(rv => {
+        // Получаем значение на момент подписки в паре computed и реактивной переменной от которой он зависит
+        const pair = getPairObj<IPairedComputedWithReactiveVariable>(reactiveVariable, rv);
+        if (rv.value !== pair.__subscribedValue) {
+            hasChanges = true;
+        }
+    })
+
+    return hasChanges;
 }
 
 function createPromise<T = any, RejT = any>() {

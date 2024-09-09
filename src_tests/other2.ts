@@ -1,8 +1,8 @@
 import { autorun, reaction, reactive, when, actionSubscribe, markSynchronousReactions } from '../src';
 import { sleep } from './helpers';
+import { assert } from 'vitest';
 
 let getterCalls = 0;
-let reactionsCount = 0;
 
 class Test {
     counter = 1;
@@ -10,34 +10,24 @@ class Test {
     constructor(c = 1) {
         reactive(this);
         this.counter = c;
-        markSynchronousReactions(this, 'quadro');
     }
 
     get double() {
         getterCalls++;
         return this.counter * 2;
     }
-
-    get quadro() {
-        getterCalls++;
-        return this.double * 2;
-    }
 }
 
-let c = 1;
+let c = 5;
 
 const test = new Test(c);
 
-autorun(() => {
-    reactionsCount++;
-    console.log('test.quadro', test.quadro);
-});
+console.log('test.double', test.double);
+console.log('test.double', test.double);
+console.log('getterCalls', getterCalls);
 
-autorun(() => {
-    console.log('counter', test.counter);
-});
+test.counter = ++c;
 
-test.counter++;
-test.counter++;
-
-console.log('reactionsCount', reactionsCount)
+console.log('test.double', test.double);
+console.log('test.double', test.double);
+console.log('getterCalls', getterCalls);

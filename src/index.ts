@@ -5,7 +5,7 @@ import {
     IReactiveVariable,
     EnhFunction,
     setReactiveVariableInMap,
-    dataChanged, computedInfo, getPairObj, IPairedEffectFnWithReactiveVariable, circularPairsSet,
+    dataChanged, computedInfo, getPairObj, IPairedEffectFnWithReactiveVariable, circularPairsSet, IPairedComputedWithReactiveVariable, computedDependenciesIsChanged,
 } from './internal';
 
 import { setObservableMapSet } from './set';
@@ -129,11 +129,18 @@ export function makeSingleReactive(target: object, key: string, value) {
 
                 subscribe(reactiveVariable);
 
-                if (!computedData.firstExec || (computedData.firstExec && reactiveVariable.dependenciesChanged)) {
+                let hasChanges = false;
+                if (!reactiveVariable.forceUpdate && computedData.firstExec && reactiveVariable.dependenciesChanged) {
+                    // Does dependencies actually change?
+                    hasChanges = computedDependenciesIsChanged(reactiveVariable);
+                }
+
+                if (!computedData.firstExec || hasChanges || reactiveVariable.forceUpdate) {
                     computedSubscribe.startDependency(reactiveVariable);
                     reactiveVariable.allowComputedSubscribe = true;
                     reactiveVariable.value = getterFn.call(this);
                     computedSubscribe.stopDependency();
+                    reactiveVariable.forceUpdate = false;
                 }
                 computedData.firstExec = true;
 

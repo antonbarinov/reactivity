@@ -36,6 +36,65 @@ describe('computed', () => {
         assert.equal(getterCalls, 2);
     })
 
+    it('computed reacts on Array.push', () => {
+        let getterCalls = 0;
+
+        class Test {
+            value = [];
+
+            constructor() {
+                reactive(this);
+            }
+
+            get valueLen() {
+                getterCalls++;
+                return this.value.length;
+            }
+        }
+
+        const test = new Test();
+
+        assert.equal(test.valueLen, 0);
+        assert.equal(test.valueLen, 0);
+        assert.equal(getterCalls, 1);
+
+        test.value.push(1);
+        assert.equal(test.valueLen, 1);
+        assert.equal(test.valueLen, 1);
+        assert.equal(getterCalls, 2);
+    })
+
+    it('computed reacts on Array.push after async update', async () => {
+        let getterCalls = 0;
+
+        class Test {
+            value = [];
+
+            constructor() {
+                reactive(this);
+            }
+
+            get valueLen() {
+                getterCalls++;
+                return this.value.length;
+            }
+        }
+
+        const test = new Test();
+
+        assert.equal(test.valueLen, 0);
+        assert.equal(test.valueLen, 0);
+        assert.equal(getterCalls, 1);
+
+        test.value.push(1);
+
+        await reactionsExecuted();
+
+        assert.equal(test.valueLen, 1);
+        assert.equal(test.valueLen, 1);
+        assert.equal(getterCalls, 2);
+    })
+
     it('cross computed check', () => {
         let getterCalls1 = 0;
         let getterCalls2 = 0;
@@ -125,6 +184,13 @@ describe('computed', () => {
         await reactionsExecuted();
 
         assert.equal(reactionsCount, 6);
+
+        test.counter++;
+        test.counter--;
+
+        await reactionsExecuted();
+
+        assert.equal(reactionsCount, 6);
     })
 
     it('reactions on computed in sync mode', async () => {
@@ -176,5 +242,38 @@ describe('computed', () => {
         await sleep(10); // Для перестраховки
         assert.equal(reactionsCount, 9);
         assert.equal(getterCalls, 3);
+    })
+
+    it(`dont' trigger compute if dependencies doesn't actually change`, () => {
+        let getterCalls = 0;
+
+        class Test {
+            counter = 1;
+
+            constructor(c = 1) {
+                reactive(this);
+                this.counter = c;
+            }
+
+            get double() {
+                getterCalls++;
+                return this.counter * 2;
+            }
+        }
+
+        let c = 1;
+
+        const test = new Test(c);
+
+        assert.equal(test.double, c * 2);
+        assert.equal(test.double, c * 2);
+        assert.equal(getterCalls, 1);
+
+        test.counter++;
+        test.counter--;
+
+        assert.equal(test.double, c * 2);
+        assert.equal(test.double, c * 2);
+        assert.equal(getterCalls, 1);
     })
 })
