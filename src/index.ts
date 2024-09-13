@@ -323,6 +323,8 @@ function disposeEffect(effectFn: EnhFunction) {
     effectFn.__subscribedTo?.forEach((reactiveVariable) => {
         reactiveVariable.subscribers.delete(effectFn);
     });
+
+    effectFn.__effectBody = undefined;
 }
 
 export function createReaction(effectFn: Function) {
