@@ -387,16 +387,15 @@ export function when(fn: () => boolean, interval?: number) {
         }
     });
 
-
-    (async () => {
-        if (interval && !resolved) {
+    if (interval && !resolved) {
+        (async () => {
             while (!fn()) {
                 await sleep(interval);
             }
 
             res(true);
-        }
-    })();
+        })();
+    }
 
     return promise;
 }
