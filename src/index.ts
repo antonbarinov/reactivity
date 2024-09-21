@@ -100,7 +100,7 @@ function makeReactiveArray(arr: any[], reactiveVariable: IReactiveVariable) {
     reactiveArrays.set(arr, reactiveVariable);
 }
 
-export function makeSingleReactive(target: object, key: string, value) {
+function makeSingleReactive(target: object, key: string, value) {
     const descriptor = Object.getOwnPropertyDescriptor(target, key);
     if (descriptor.set) return false;
 
