@@ -220,8 +220,9 @@ export function executeReactiveVariables() {
             } else {
                 //console.log('reactiveVariable.isComputed', reactiveVariable.isComputed);
                 if (reactiveVariable.isComputed) {
-                    // Does dependencies actually change?
-                    if (computedDependenciesIsChanged(reactiveVariable)) {
+                    const newValue = reactiveVariable.parentTarget[reactiveVariable.key];
+                    if (pair.__subscribedValue !== newValue) {
+                        pair.__subscribedValue = newValue
                         effectsToExec.add(effectFn);
                     }
                 }
@@ -327,6 +328,18 @@ export function dataChanged(reactiveVariable: IReactiveVariable, forceUpdate = f
 
     if (reactiveSubscribe.syncMode || reactiveVariable.syncReactions) {
         executeEffects(reactiveVariable);
+
+        // Computed check - BEGIN
+        if (reactiveVariable.computedWatchers) {
+            reactiveVariable.computedWatchers.forEach((rv) => {
+                const prevValue = rv.value;
+                const newValue = rv.parentTarget[rv.key];
+                if (prevValue !== newValue) {
+                    executeEffects(rv);
+                }
+            })
+        }
+        // Computed check - END
     } else {
         pushReaction(reactiveVariable);
 

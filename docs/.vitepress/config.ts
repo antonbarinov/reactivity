@@ -18,16 +18,20 @@ export default defineConfig({
             },
         },
         nav: [
-            //{ text: 'Example', link: '/example' },
-
+            { text: 'ver. 1.1.4', link: '' },
+            /*
             {
                 text: 'High level API',
                 items: [
                     { text: 'reactive', link: '/high/reactive' },
                 ],
-            },
+            },*/
 
             // ...
+        ],
+
+        socialLinks: [
+            { icon: 'github', link: 'https://github.com/vuejs/vitepress' },
         ],
 
         sidebar: [
@@ -35,6 +39,7 @@ export default defineConfig({
                 text: 'High level API',
                 items: [
                     { text: 'reactive', link: '/high/reactive' },
+                    { text: 'autorun', link: '/high/autorun' },
                 ],
             },
         ],

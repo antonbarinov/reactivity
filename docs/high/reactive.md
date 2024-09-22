@@ -3,7 +3,6 @@ outline: deep
 ---
 
 # reactive()
-
 Make class/object reactive. 
 
 - **Type**

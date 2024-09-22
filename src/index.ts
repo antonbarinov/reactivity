@@ -25,8 +25,10 @@ class ReactiveSubscribe {
     syncMode = false;
     // Currently executed effect
     executedEffect: EnhFunction = null;
+    __pauseTracking = false;
 
     get currentEffect() {
+        if (this.__pauseTracking) return null;
         return this.effects[this.effects.length - 1];
     }
 
@@ -136,10 +138,14 @@ function makeSingleReactive(target: object, key: string, value) {
                 }
 
                 if (!computedData.firstExec || hasChanges || reactiveVariable.forceUpdate) {
+                    reactiveSubscribe.__pauseTracking = true;
                     computedSubscribe.startDependency(reactiveVariable);
+
                     reactiveVariable.allowComputedSubscribe = true;
                     reactiveVariable.value = getterFn.call(this);
+
                     computedSubscribe.stopDependency();
+                    reactiveSubscribe.__pauseTracking = false;
                     reactiveVariable.forceUpdate = false;
                 }
                 computedData.firstExec = true;

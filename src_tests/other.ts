@@ -1,69 +1,47 @@
-import { autorun, reaction, reactive, when } from '../src';
+import { autorun, reaction, reactive, when, markSynchronousReactions } from '../src';
 import { sleep } from './helpers';
 
 
 
-class Test {
-    counter = 1;
+class Animal {
+    name
+    energyLevel
 
-    constructor() {
+    constructor(name) {
+        this.name = name
+        this.energyLevel = 100
         reactive(this);
+        markSynchronousReactions(this, 'energyLevel');
+    }
+
+    reduceEnergy() {
+        this.energyLevel -= 10
+    }
+
+    get isHungry() {
+        return this.energyLevel < 50
     }
 }
 
-const test = new Test();
+const giraffe = new Animal("Gary")
 
-const disp1 = reaction(() => test.counter, (disposeFn) => {
-    console.log('reaction #1', test.counter);
-    if (test.counter > 5) {
-        disposeFn();
-    }
-});
-
-// Circular dependency
-const disp2 = reaction(() => test.counter, () => {
-    console.log('reaction #2', test.counter);
-    test.counter++;
-});
-
-reaction(() => test.counter, (disposeFn) => {
-    if (test.counter > 6) {
-        console.log('reaction #3', test.counter);
-    }
-});
-
-// Circular dependency
 autorun(() => {
-    console.log('autorun #1', test.counter);
-    test.counter++;
+    console.log("Energy level:", giraffe.energyLevel)
 })
 
-autorun((disposeFn) => {
-    console.log('autorun #2', test.counter);
-    if (test.counter > 5) {
-        disposeFn();
+autorun(() => {
+    if (giraffe.isHungry) {
+        console.log("Now I'm hungry!")
+    } else {
+        console.log("I'm not hungry!")
     }
 })
 
-//disp1();
-
-// also check auto batching
-test.counter++;
-test.counter++;
-
+console.log("Now let's change state!");
 (async () => {
-    await when(() => test.counter > 10);
-    console.log('text.counter > 10');
+    for (let i = 0; i < 10; i++) {
+        giraffe.reduceEnergy()
+        //await sleep(10);
+    }
 })();
-
-(async () => {
-    await when(() => test.counter > 15);
-    console.log('text.counter > 15');
-})();
-
-setInterval(() => {
-    // also check auto batching
-    test.counter++;
-    test.counter++;
-}, 1000);
 
