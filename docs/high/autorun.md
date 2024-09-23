@@ -129,3 +129,49 @@ Energy level: 20
 Energy level: 10
 Energy level: 0
 ```
+
+##### Example #3 (dispose)
+
+````typescript
+class State {
+    count = 1;
+    
+    constructor() {
+        reactive(this);
+        markSynchronousReactions(this, 'count');
+    }
+}
+
+const state = new State();
+
+// Variant 1
+const disposeFn = autorun(() => {
+    console.log(state.count);
+    if (state.count > 2) {
+        // After that this autorun no longer active
+        disposeFn(); 
+    }
+});
+
+// Variant 2
+autorun((disposeFn) => {
+    console.log(state.count);
+    if (state.count > 2) {
+        // After that this autorun no longer active
+        disposeFn();
+    }
+});
+
+for (let i = 0; i < 10; i++) {
+    state.count++;
+}
+````
+Output will be:
+```
+1
+1
+2
+2
+3
+3
+```

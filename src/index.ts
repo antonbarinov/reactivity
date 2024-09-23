@@ -131,6 +131,8 @@ function makeSingleReactive(target: object, key: string, value) {
 
                 subscribe(reactiveVariable);
 
+                const effectFn = reactiveSubscribe.currentEffect;
+
                 let hasChanges = false;
                 if (!reactiveVariable.forceUpdate && computedData.firstExec && reactiveVariable.dependenciesChanged) {
                     // Does dependencies actually change?
@@ -143,6 +145,12 @@ function makeSingleReactive(target: object, key: string, value) {
 
                     reactiveVariable.allowComputedSubscribe = true;
                     reactiveVariable.value = getterFn.call(this);
+
+                    // When value for __subscribedValue was not defined (first time getterFn call) on top call subscribe(reactiveVariable); then define it here
+                    if (effectFn && !computedData.firstExec) {
+                        const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
+                        pair.__subscribedValue = reactiveVariable.value;
+                    }
 
                     computedSubscribe.stopDependency();
                     reactiveSubscribe.__pauseTracking = false;

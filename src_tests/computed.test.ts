@@ -276,4 +276,87 @@ describe('computed', () => {
         assert.equal(test.double, c * 2);
         assert.equal(getterCalls, 1);
     })
+
+    it(`react exactly on computed value change`, async () => {
+        class Test {
+            counter = 1;
+
+            constructor() {
+                reactive(this);
+            }
+
+            get tooBig() {
+                return this.counter > 5;
+            }
+        }
+
+        const test = new Test();
+        const result = [];
+        const result2 = [];
+
+        autorun(() => {
+            result.push(test.tooBig);
+        });
+
+        autorun(() => {
+            result2.push(test.tooBig);
+        });
+
+        for (let i = 0; i < 10; i++) {
+            test.counter++;
+            await reactionsExecuted();
+        }
+
+        assert.deepEqual(result, [false, true]);
+        assert.deepEqual(result2, [false, true]);
+
+        for (let i = 0; i < 10; i++) {
+            test.counter--;
+            await reactionsExecuted();
+        }
+
+        assert.deepEqual(result, [false, true, false]);
+        assert.deepEqual(result2, [false, true, false]);
+    })
+
+    it(`react exactly on computed value change [sync]`, () => {
+        class Test {
+            counter = 1;
+
+            constructor() {
+                reactive(this);
+                markSynchronousReactions(this, 'counter');
+            }
+
+            get tooBig() {
+                return this.counter > 5;
+            }
+        }
+
+        const test = new Test();
+        const result = [];
+        const result2 = [];
+
+        autorun(() => {
+            result.push(test.tooBig);
+        });
+
+        autorun(() => {
+            result2.push(test.tooBig);
+        });
+
+        for (let i = 0; i < 10; i++) {
+            test.counter++;
+        }
+
+        assert.deepEqual(result, [false, true]);
+        assert.deepEqual(result2, [false, true]);
+
+        for (let i = 0; i < 10; i++) {
+            test.counter--;
+        }
+
+        assert.deepEqual(result, [false, true, false]);
+        assert.deepEqual(result2, [false, true, false]);
+    })
 })
