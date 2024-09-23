@@ -102,6 +102,12 @@ export function computedFunctionsWatchersCheck(reactiveVariable: IReactiveVariab
 
 export function pushReaction(reactiveVariable: IReactiveVariable) {
     reactiveVariablesChangedQueue.add(reactiveVariable);
+
+    // Если после синхронных реакций произошли изменения которые должны реагировать асинхронно,
+    // то удаляем эффекты из списка отработанных синхронно
+    reactiveVariable.subscribers.forEach((effectFn) => {
+        syncEffectsWasExecuted.delete(effectFn);
+    });
 }
 
 // Получить реактивную переменную зная родительский объект и название свойства (ключ). Например someObj.someVal - getReactiveVariable(someObj, 'someVal')

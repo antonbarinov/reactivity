@@ -231,4 +231,59 @@ describe('reactions', () => {
 
         assert.equal(reactionCalls, 2);
     })
+
+    it('sync and async reactions work together correctly', async () => {
+        class Test {
+            counter = 1;
+            syncCounter = 1;
+
+            constructor() {
+                reactive(this);
+                markSynchronousReactions(this, 'syncCounter');
+            }
+        }
+
+        const test = new Test();
+
+        const result = [];
+
+        autorun(() => {
+            result.push([test.syncCounter, test.counter]);
+        })
+
+        test.counter++;
+        test.syncCounter++;
+        test.counter++;
+
+        await reactionsExecuted();
+
+        assert.deepEqual(result, [[1,1], [2,2], [2,3]]);
+    })
+
+    it('sync and async reactions work together correctly [case 2]', async () => {
+        class Test {
+            counter = 1;
+            syncCounter = 1;
+
+            constructor() {
+                reactive(this);
+                markSynchronousReactions(this, 'syncCounter');
+            }
+        }
+
+        const test = new Test();
+
+        const result = [];
+
+        autorun(() => {
+            result.push([test.syncCounter, test.counter]);
+        })
+
+        test.counter++;
+        test.syncCounter++;
+
+        await reactionsExecuted();
+
+        assert.deepEqual(result, [[1,1], [2,2]]);
+    })
 })
