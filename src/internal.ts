@@ -206,7 +206,7 @@ export function subscribe(reactiveVariable: IReactiveVariable) {
     return effectFn;
 }
 
-export function executeReactiveVariables() {
+function executeReactiveVariables() {
     reactiveVariablesChangedQueue.forEach((reactiveVariable) => {
         const { value } = reactiveVariable;
 
@@ -303,7 +303,7 @@ function executeEffects(reactiveVariable?: IReactiveVariable) {
     try {
         effects.forEach((effectFn) => {
             if (syncMode) {
-                // Добавим информация о отработанных синхронных реакциях, чтобы они не были вызваны потом асинхронно
+                // Добавим информация об отработанных синхронных реакциях, чтобы они не были вызваны потом асинхронно
                 syncEffectsWasExecuted.add(effectFn);
             }
 

@@ -7,6 +7,7 @@ The autorun function accepts one function that should run every time anything it
 It also runs once when you create the autorun itself. 
 It only responds to changes that we mark as reactive.
 
+Returns dispose function.
 - **Type**
 ```typescript
 declare function autorun(effect: (disposeFn: Function) => any): () => void;
@@ -58,7 +59,7 @@ for (let i = 0; i < 10; i++) {
     giraffe.reduceEnergy();
 }
 ```
-Sine reactions are async by default, output will be:
+Since reactions are async by default, output will be:
 ```
 Energy level: 100
 I'm not hungry!

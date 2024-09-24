@@ -17,6 +17,13 @@ Our recommended is not use nested reactivity by default.
 
 Returns original object given to a `target` parameter.
 
+- **Params**
+
+`target` (required) - object/class instance that become reactive.
+
+`annotations` (optional) - array of properties that become reactive or make reactive all except it (when `ignore: true`). 
+
+`igone` (optional) - if `true`, turn on except mode for `annotations`.
 
 ## Examples
 

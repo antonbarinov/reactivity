@@ -1,6 +1,5 @@
 import {
     subscribe,
-    executeReactiveVariables,
     getReactiveVariable,
     IReactiveVariable,
     EnhFunction,
