@@ -2,22 +2,33 @@ import { autorun, reaction, reactive, when, actionSubscribe, markSynchronousReac
 import { sleep } from './helpers';
 import { assert } from 'vitest';
 
-class Test {
-    counter = 1;
-    syncCounter = 1;
+(async () => {
+    let value = false;
 
-    constructor() {
-        reactive(this);
-        markSynchronousReactions(this, 'syncCounter');
-    }
-}
+    setTimeout(() => {
+        value = true;
+    }, 190);
 
-const test = new Test();
+    let whenTriggered = false;
+    (async () => {
+        await when(() => value, 210);
+        whenTriggered = true;
+        console.log(123);
+    })();
 
-autorun(() => {
-    console.log(test.syncCounter, test.counter);
-})
+    (async () => {
+        await when(() => value, 210);
+        whenTriggered = true;
+        console.log(1234);
+    })();
 
-test.counter++;
-test.syncCounter++;
-//test.counter++;
+    (async () => {
+        await when(() => value, 210);
+        whenTriggered = true;
+        console.log(12345);
+    })();
+
+    await sleep(220);
+
+    console.log('whenTriggered', whenTriggered);
+})();

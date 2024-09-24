@@ -4,7 +4,7 @@ import {
     IReactiveVariable,
     EnhFunction,
     setReactiveVariableInMap,
-    dataChanged, computedInfo, getPairObj, IPairedEffectFnWithReactiveVariable, circularPairsSet, IPairedComputedWithReactiveVariable, computedDependenciesIsChanged,
+    dataChanged, computedInfo, getPairObj, IPairedEffectFnWithReactiveVariable, circularPairsSet, IPairedComputedWithReactiveVariable, computedDependenciesIsChanged, createPromise,
 } from './internal';
 
 import { setObservableMapSet } from './set';
@@ -388,35 +388,65 @@ export function autorun(fn: (disposeFn: Function) => any) {
     return dispose;
 }
 
-export function when(fn: () => boolean, interval?: number) {
-    let res: Function = null;
-    const promise = new Promise((resolve) => { res = resolve; });
-    let resolved = false;
+let whenTickPromiseInterval = null;
+let whenTickPromiseSubscribers = 0;
+let whenTickPromise: ReturnType<typeof createPromise> = null;
 
-    autorun(() => {
-        if (fn()) {
-            res(true);
-            resolved  = true;
+export function when(fn: () => boolean, timeout?: number): Promise<any> {
+    const whenPromise = createPromise();
+    whenTickPromiseSubscribers++;
+    const hasTimeout = timeout > 0;
+
+    function done(reject = false) {
+        whenTickPromiseSubscribers--;
+        if (whenTickPromiseSubscribers === 0) {
+            if (whenTickPromise) whenTickPromise.resolve();
+            clearInterval(whenTickPromiseInterval);
+        }
+        if (reject) {
+            whenPromise.reject(`[when] rejected with timeout`);
+        } else {
+            whenPromise.resolve(true);
+        }
+    }
+
+    const dispose = autorun((disposeFn) => {
+        if (fn() && !whenPromise.resolved) {
+            disposeFn();
+            done();
         }
     });
 
-    if (interval && !resolved) {
-        (async () => {
-            while (!fn()) {
-                await sleep(interval);
-            }
+    if (!whenPromise.resolved && whenTickPromiseSubscribers) {
+        if (whenTickPromiseSubscribers === 1) {
+            whenTickPromise = createPromise();
 
-            res(true);
+            whenTickPromiseInterval = setInterval(() => {
+                whenTickPromise.resolve();
+                whenTickPromise = createPromise();
+            }, 10);
+        }
+
+        (async () => {
+            while (!whenPromise.resolved) {
+                await whenTickPromise.promise;
+                if (hasTimeout) {
+                    timeout -= 10;
+                    if (timeout <= 0) {
+                        dispose();
+                        done(true); // reject
+                    }
+                }
+
+                if (!whenPromise.resolved && fn()) {
+                    dispose();
+                    done();
+                }
+            }
         })();
     }
 
-    return promise;
-}
-
-function sleep(ms = 0) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
+    return whenPromise.promise;
 }
 
 type AnyFn = (...args: any[]) => any;

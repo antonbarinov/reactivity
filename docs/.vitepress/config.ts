@@ -41,6 +41,7 @@ export default defineConfig({
                     { text: 'reactive', link: '/high/reactive' },
                     { text: 'autorun', link: '/high/autorun' },
                     { text: 'reaction', link: '/high/reaction' },
+                    { text: 'when', link: '/high/when' },
                 ],
             },
         ],

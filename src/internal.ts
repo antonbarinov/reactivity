@@ -192,10 +192,12 @@ export function subscribe(reactiveVariable: IReactiveVariable) {
         const pair = getPairObj<IPairedComputedWithReactiveVariable>(computedSubscribe.currentDependency, reactiveVariable);
         pair.__subscribedValue = reactiveVariable.value;
 
-        for (const dep of computedSubscribe.dependencies) {
-            if (dep.allowComputedSubscribe || dep.allowComputedSubscribe === undefined) {
-                reactiveVariable.computedWatchers.add(dep);
-                dep.reactiveVariablesInComputed.add(reactiveVariable);
+        if (computedSubscribe.currentDependency.allowComputedSubscribe !== false) {
+            for (const dep of computedSubscribe.dependencies) {
+                if (dep.allowComputedSubscribe || dep.allowComputedSubscribe === undefined) {
+                    reactiveVariable.computedWatchers.add(dep);
+                    dep.reactiveVariablesInComputed.add(reactiveVariable);
+                }
             }
         }
     }
@@ -271,19 +273,36 @@ export function computedDependenciesIsChanged(reactiveVariable: IReactiveVariabl
     return hasChanges;
 }
 
-function createPromise<T = any, RejT = any>() {
-    let resolve: (value: T) => any = null;
+export function createPromise<T = any, RejT = any>() {
+    let resolve: (value?: T) => any = null;
     let reject: (reason?: RejT) => any = null;
+
     const promise = new Promise<T>((res, rej) => {
-        resolve = res;
-        reject = rej;
+        resolve = (arg?) => {
+            if (resultObj.resolved) return false;
+
+            resultObj.resolved = true;
+            res(arg);
+        }
+
+        reject = (arg?) => {
+            if (resultObj.resolved) return false;
+
+            resultObj.resolved = true;
+            resultObj.rejected = true;
+            rej(arg);
+        }
     });
 
-    return {
+    const resultObj = {
         promise,
         resolve,
         reject,
+        resolved: false,
+        rejected: false,
     }
+
+    return resultObj;
 }
 
 let execPromiseWatchers = 0;
