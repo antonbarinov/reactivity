@@ -454,7 +454,7 @@ type AnyFn = (...args: any[]) => any;
 const actionListeners = new WeakMap<AnyFn, Set<AnyFn>>();
 let lastReadFn: ILastReadFn = null;
 
-export function actionSubscribe(action: AnyFn, cb: AnyFn) {
+export function actionSubscribe(action: AnyFn, cb: (unsubscribeFn: Function) => any) {
     if (!lastReadFn || lastReadFn.value !== action) {
         throw new Error(`Can't subscribe to function: ${action}\r\n Check that is arrow function and reactive`);
     }
@@ -470,10 +470,16 @@ export function actionSubscribe(action: AnyFn, cb: AnyFn) {
     const fnContext = lastReadFn.context;
 
     const wrapper = () => {
-        const listeners = actionListeners.get(wrapper);
-        listeners.forEach((cb) => cb());
+        const result = fn.apply(fnContext, arguments);
 
-        return fn.apply(fnContext, arguments);
+        const listeners = actionListeners.get(wrapper);
+        listeners.forEach((cb) => cb(unsubscribe));
+
+        return result;
+    }
+
+    function unsubscribe() {
+        actionUnsubscribe(wrapper, cb);
     }
 
     lastReadFn.value = wrapper;
@@ -482,7 +488,7 @@ export function actionSubscribe(action: AnyFn, cb: AnyFn) {
     actionListeners.set(wrapper, listeners);
     listeners.add(cb);
 
-    return () => actionUnsubscribe(wrapper, cb);
+    return unsubscribe;
 }
 
 export function actionUnsubscribe(action: AnyFn, cb: AnyFn) {

@@ -46,7 +46,7 @@ export interface IReactiveVariable {
     /**
      * Computed only section -- BEGIN
      * */
-    // Разрешить подписку на computed функции на реактивные переменные которые она видит в процессе выполнения
+    // Разрешить подписку computed функции на реактивные переменные которые она видит в процессе выполнения
     allowComputedSubscribe?: boolean;
     // Были ли изменены зависимости (если да, то будет перевызвана computed функция)
     dependenciesChanged?: boolean;
