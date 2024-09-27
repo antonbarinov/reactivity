@@ -24,7 +24,7 @@ class ReactiveSubscribe {
     syncMode = false;
     // Currently executed effect
     executedEffect: EnhFunction = null;
-    __pauseTracking = false;
+    private __pauseTracking = false;
 
     get currentEffect() {
         if (this.__pauseTracking) return null;
@@ -36,14 +36,25 @@ class ReactiveSubscribe {
     }
 
     stop = () => {
+        this.resumeTracking();
         this.effects.pop();
+    }
+
+    pauseTracking = () => {
+        this.__pauseTracking = true;
+    }
+
+    resumeTracking = () => {
+        this.__pauseTracking = false;
     }
 }
 
 class ComputedSubscribe {
     dependencies: IReactiveVariable[] = [];
+    private __pauseTracking = false;
 
     get currentDependency() {
+        if (this.__pauseTracking) return null;
         return this.dependencies[this.dependencies.length - 1];
     }
 
@@ -53,6 +64,14 @@ class ComputedSubscribe {
 
     stopDependency = () => {
         this.dependencies.pop();
+    }
+
+    pauseTracking = () => {
+        this.__pauseTracking = true;
+    }
+
+    resumeTracking = () => {
+        this.__pauseTracking = false;
     }
 }
 
@@ -139,7 +158,7 @@ function makeSingleReactive(target: object, key: string, value) {
                 }
 
                 if (!computedData.firstExec || hasChanges || reactiveVariable.forceUpdate) {
-                    reactiveSubscribe.__pauseTracking = true;
+                    reactiveSubscribe.pauseTracking();
                     computedSubscribe.startDependency(reactiveVariable);
 
                     reactiveVariable.allowComputedSubscribe = true;
@@ -152,7 +171,7 @@ function makeSingleReactive(target: object, key: string, value) {
                     }
 
                     computedSubscribe.stopDependency();
-                    reactiveSubscribe.__pauseTracking = false;
+                    reactiveSubscribe.resumeTracking();
                     reactiveVariable.forceUpdate = false;
                 }
                 computedData.firstExec = true;
