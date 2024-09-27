@@ -31,7 +31,7 @@ export default defineConfig({
         ],
 
         socialLinks: [
-            { icon: 'github', link: 'https://github.com/vuejs/vitepress' },
+            { icon: 'github', link: 'https://github.com/antonbarinov/reactivity' },
         ],
 
         sidebar: [
@@ -44,6 +44,14 @@ export default defineConfig({
                     { text: 'when', link: '/high/when' },
                     { text: 'markSynchronousReactions', link: '/high/markSynchronousReactions' },
                     { text: 'actionSubscribe', link: '/high/actionSubscribe' },
+                ],
+            },
+            {
+                text: 'Low level API',
+                items: [
+                    { text: 'createReaction', link: '/low/createReaction' },
+                    { text: 'reactiveSubscribe', link: '/low/reactiveSubscribe' },
+                    { text: 'computedSubscribe', link: '/low/computedSubscribe' },
                 ],
             },
         ],

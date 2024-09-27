@@ -15,7 +15,6 @@ declare function actionSubscribe(action: Function, cb: (unsubscribeFn: Function)
 
 - **Params**
 
-
 `action` (required) - function inside reactive object.
 
 `cb` (required) - callback that fires when `action` is called. `cb` has 
