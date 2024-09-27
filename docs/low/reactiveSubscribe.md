@@ -15,9 +15,9 @@ The `reactiveSubscribe` is object instance of reactive control on observables.
 
 `stop()` - stop subscribing on last `effect` function. *(Pop effects queue)*
 
-`pauseTracking()` - observables stop subscribing on any effects until `resumeTracking()` was called.
+`pauseTracking()` - observables(*including computed*) stop subscribing on any effects until `resumeTracking()` was called.
 
-`pauseTracking()` - observables resume subscribing.
+`pauseTracking()` - observables(*including computed*) resume subscribing.
 
 ## Examples
 

@@ -51,10 +51,8 @@ class ReactiveSubscribe {
 
 class ComputedSubscribe {
     dependencies: IReactiveVariable[] = [];
-    private __pauseTracking = false;
 
     get currentDependency() {
-        if (this.__pauseTracking) return null;
         return this.dependencies[this.dependencies.length - 1];
     }
 
@@ -67,11 +65,11 @@ class ComputedSubscribe {
     }
 
     pauseTracking = () => {
-        this.__pauseTracking = true;
+        if (this.currentDependency) this.currentDependency.allowComputedSubscribe = false;
     }
 
     resumeTracking = () => {
-        this.__pauseTracking = false;
+        if (this.currentDependency) this.currentDependency.allowComputedSubscribe = true;
     }
 }
 
