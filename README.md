@@ -2,6 +2,8 @@
 Reactive library based on getters/setters, auto-batching, async reactions (by default).
 Inspired by MobX.
 
+## [Docs available here](https://antonbarinov.github.io/reactivity/)
+
 ## Main concepts:
 - Zero dependencies.
 - True computed properties.
