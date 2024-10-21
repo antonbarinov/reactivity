@@ -58,9 +58,6 @@ export default defineConfig({
             },
         ],
     },
-    vite: {
-        base: process.env.GITHUB_PAGES_DOCS_BUILD ? '/reactivity': '/',
-    }
-});
 
-console.log(process.env);
+    base: process.env.GITHUB_PAGES_DOCS_BUILD ? '/reactivity': '/',
+});
