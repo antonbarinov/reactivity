@@ -9,6 +9,9 @@ on:
 permissions:
   contents: write
 
+env:
+  GITHUB_PAGES_DOCS_BUILD: true
+
 jobs:
   build:
     runs-on: ubuntu-latest

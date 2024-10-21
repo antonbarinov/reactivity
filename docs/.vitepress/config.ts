@@ -5,13 +5,15 @@ export default defineConfig({
     lang: 'en-US',
     title: 'Reactive',
     description: 'Reactive state manager base on getters/setters',
-
+    //appearance: 'dark', // dark theme by default
+    lastUpdated: true,
     themeConfig: {
         search: {
             provider: 'local',
             options: {
                 miniSearch: {
                     searchOptions: {
+                        // @ts-ignore
                         detailedView: true,
                     },
                 },
@@ -56,4 +58,7 @@ export default defineConfig({
             },
         ],
     },
+    vite: {
+        base: process.env.GITHUB_PAGES_DOCS_BUILD ? '/reactivity': '/',
+    }
 });
