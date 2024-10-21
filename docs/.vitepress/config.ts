@@ -62,3 +62,5 @@ export default defineConfig({
         base: process.env.GITHUB_PAGES_DOCS_BUILD ? '/reactivity': '/',
     }
 });
+
+console.log(process.env);
