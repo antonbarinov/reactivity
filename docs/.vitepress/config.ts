@@ -7,7 +7,7 @@ export default defineConfig({
     title: 'Reactive',
     description: 'Reactive state manager base on getters/setters',
     //appearance: 'dark', // dark theme by default
-    lastUpdated: true,
+    //lastUpdated: true,
     themeConfig: {
         outline: 'deep',
         search: {
