@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress';
+import packageJson from '../../package.json';
 
 // refer https://vitepress.dev/reference/site-config for details
 export default defineConfig({
@@ -8,6 +9,7 @@ export default defineConfig({
     //appearance: 'dark', // dark theme by default
     lastUpdated: true,
     themeConfig: {
+        outline: 'deep',
         search: {
             provider: 'local',
             options: {
@@ -20,7 +22,7 @@ export default defineConfig({
             },
         },
         nav: [
-            { text: 'ver. 1.1.4', link: '' },
+            { text: `ver. ${packageJson.version}`, link: '' },
             /*
             {
                 text: 'High level API',
@@ -54,6 +56,12 @@ export default defineConfig({
                     { text: 'createReaction', link: '/low/createReaction' },
                     { text: 'reactiveSubscribe', link: '/low/reactiveSubscribe' },
                     { text: 'computedSubscribe', link: '/low/computedSubscribe' },
+                ],
+            },
+            {
+                text: 'React integration',
+                items: [
+                    { text: 'observer', link: '/react/observer' },
                 ],
             },
         ],
