@@ -40,6 +40,11 @@ export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | '
         parentTarget: target,
     };
 
+    if (type == 'set') {
+        reactiveVariable.value = 0;
+        reactiveVariable.prevValue = 0;
+    }
+
     const reactiveVariablesSize: IReactiveVariable = {
         value: target.size,
         prevValue: target.size,
@@ -76,6 +81,7 @@ export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | '
         const valueExist = mapSetPrototypes[`${type}__has`].apply(this, arguments);
         const rv = registerMapSetReactiveVar(reactiveVariable, value, type);
         rv.value = true;
+        reactiveVariable.value++;
 
         // Data changed
         if (!valueExist) {

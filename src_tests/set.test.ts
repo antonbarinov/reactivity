@@ -96,4 +96,43 @@ describe('set', () => {
         assert.equal(mapValChangedTimes, 2);
         assert.equal(sizeChangedTimes, 6);
     })
+
+    it('computed work', async () => {
+        class Test {
+            set = new Set();
+
+            constructor() {
+                reactive(this);
+            }
+
+            get testSetGetter() {
+                let i = 0;
+                test.set.forEach(() => {
+                    i++;
+                });
+
+                return i;
+            }
+        }
+
+        const test = new Test();
+
+        let result = [];
+
+        autorun(() => {
+            result.push(test.testSetGetter);
+        });
+
+
+        assert.deepEqual(result, [0]);
+        test.set.add(1);
+
+        await reactionsExecuted();
+        assert.deepEqual(result, [0,1]);
+
+        test.set.add(2);
+
+        await reactionsExecuted();
+        assert.deepEqual(result, [0,1,2]);
+    })
 })
