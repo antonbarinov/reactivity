@@ -25,6 +25,8 @@ class ReactiveSubscribe {
     // Currently executed effect
     executedEffect: EnhFunction = null;
     private __pauseTracking = false;
+    // Do not use reactive functions (improve performance for batch updates that doesn't need reactive effects)
+    ignoreReactivity = false;
 
     get currentEffect() {
         if (this.__pauseTracking) return null;
@@ -209,7 +211,9 @@ function makeSingleReactive(target: object, key: string, value) {
 
     Object.defineProperty(target, key, {
         get() {
-            subscribe(reactiveVariable);
+            if (!reactiveSubscribe.ignoreReactivity) {
+                subscribe(reactiveVariable);
+            }
 
             //console.log(`[read] ${constructorName}.${key}`);
 
@@ -222,7 +226,7 @@ function makeSingleReactive(target: object, key: string, value) {
             const isDataChanged = prevValue !== v;
 
             // Circular dependency check
-            if (effectFn && effectFn.__subscribedTo?.has(reactiveVariable)) {
+            if (effectFn && effectFn.__subscribedTo?.has(reactiveVariable) && !reactiveSubscribe.ignoreReactivity) {
                 let problemFnBody = effectFn.__effectBody || effectFn;
 
                 const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
@@ -235,7 +239,7 @@ function makeSingleReactive(target: object, key: string, value) {
                     disposeEffect(effectFn);
 
                     // @ts-ignore
-                    if (!__VITEST__) {
+                    if (!window.__VITEST__) {
                         console.error('Circular dependency changes detected in:');
                         console.trace(problemFnBody);
                         console.error(
@@ -261,7 +265,9 @@ function makeSingleReactive(target: object, key: string, value) {
                     makeReactiveArray(v, reactiveVariable);
                 }
 
-                dataChanged(reactiveVariable);
+                if (!reactiveSubscribe.ignoreReactivity) {
+                    dataChanged(reactiveVariable);
+                }
             }
         },
         enumerable: true,
@@ -296,7 +302,7 @@ export function reactive<T extends object, K extends keyof T>(target: T, annotat
         } else if (typeof target[key] === 'function') {
             const fn: ILastReadFn = {
                 value: target[key] as AnyFn,
-                context: target
+                context: target,
             };
 
             Object.defineProperty(target, key, {

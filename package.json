@@ -22,6 +22,7 @@
   },
   "author": "",
   "license": "ISC",
+  "repository": "https://github.com/antonbarinov/reactivity",
   "devDependencies": {
     "@types/node": "^18.13.0",
     "@types/react": "^18.0.28",
