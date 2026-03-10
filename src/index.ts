@@ -158,6 +158,15 @@ function makeSingleReactive(target: object, key: string, value) {
                 }
 
                 if (!computedData.firstExec || hasChanges || reactiveVariable.forceUpdate) {
+                    // Clean up stale subscriptions before re-evaluating so that removed
+                    // conditional branches don't keep triggering this computed forever.
+                    if (reactiveVariable.reactiveVariablesInComputed) {
+                        reactiveVariable.reactiveVariablesInComputed.forEach((rv) => {
+                            rv.computedWatchers?.delete(reactiveVariable);
+                        });
+                        reactiveVariable.reactiveVariablesInComputed.clear();
+                    }
+
                     reactiveSubscribe.pauseTracking();
                     computedSubscribe.startDependency(reactiveVariable);
 
@@ -239,7 +248,7 @@ function makeSingleReactive(target: object, key: string, value) {
                     disposeEffect(effectFn);
 
                     // @ts-ignore
-                    if (!window.__VITEST__) {
+                    if (typeof window !== 'undefined' && !window.__VITEST__) {
                         console.error('Circular dependency changes detected in:');
                         console.trace(problemFnBody);
                         console.error(
@@ -361,6 +370,7 @@ function disposeEffect(effectFn: EnhFunction) {
     });
 
     effectFn.__effectBody = undefined;
+    effectFn.__subscribedTo?.clear();
 }
 
 export function createReaction(effectFn: Function) {
@@ -492,7 +502,7 @@ export function actionSubscribe(action: AnyFn, cb: (unsubscribeFn: Function) => 
     const fn = lastReadFn.value;
     const fnContext = lastReadFn.context;
 
-    const wrapper = () => {
+    function wrapper() {
         const result = fn.apply(fnContext, arguments);
 
         const listeners = actionListeners.get(wrapper);

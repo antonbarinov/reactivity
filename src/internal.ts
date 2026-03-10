@@ -144,13 +144,11 @@ export function getPairObj<T>(obj1: object, obj2: object): T {
         pairsRootObj.set(obj2, wm2);
     }
 
-    const newObj = {};
-
     if (!wm1.has(obj2)) {
-        wm1.set(obj2, newObj);
+        wm1.set(obj2, {});
     }
     if (!wm2.has(obj1)) {
-        wm2.set(obj1, newObj);
+        wm2.set(obj1, {});
     }
 
     return wm1.get(obj2);
@@ -340,7 +338,7 @@ function executeEffects(reactiveVariable?: IReactiveVariable) {
     if (execPromiseWatchers > 0) {
         execPromise.resolve(true);
         execPromise = createPromise();
-        execPromiseWatchers--;
+        execPromiseWatchers = 0;
     }
 }
 

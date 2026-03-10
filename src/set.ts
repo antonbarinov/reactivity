@@ -136,10 +136,17 @@ export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | '
 
             dataChanged(reactiveVariable);
 
+            const keysToDelete: Array<object | string> = [];
             reactiveVariable.mapSetVars.forEach((rv, key) => {
                 rv.value = false;
                 dataChanged(rv);
+                if (rv.subscribers.size === 0) {
+                    keysToDelete.push(key);
+                }
             });
+            for (const key of keysToDelete) {
+                reactiveVariable.mapSetVars.delete(key);
+            }
         }
     };
 
@@ -157,6 +164,10 @@ export function setObservableMapSet(target, type: 'set' | 'map' | 'weak_map' | '
             const rv = registerMapSetReactiveVar(reactiveVariable, value, type);
             rv.value = false;
             dataChanged(rv);
+
+            if (rv.subscribers.size === 0) {
+                reactiveVariable.mapSetVars.delete(value);
+            }
         }
     };
 
