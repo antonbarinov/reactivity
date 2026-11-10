@@ -260,10 +260,12 @@ function executeReactiveVariables() {
 export function computedDependenciesIsChanged(reactiveVariable: IReactiveVariable) {
     let hasChanges = false;
     // Does dependencies actually change?
-    reactiveVariable.reactiveVariablesInComputed.forEach(rv => {
+    reactiveVariable.reactiveVariablesInComputed.forEach((rv) => {
         // Получаем значение на момент подписки в паре computed и реактивной переменной от которой он зависит
         const pair = getPairObj<IPairedComputedWithReactiveVariable>(reactiveVariable, rv);
-        if (rv.value !== pair.__subscribedValue) {
+        const currentValue = rv.isComputed ? rv.parentTarget[rv.key] : rv.value;
+
+        if (currentValue !== pair.__subscribedValue) {
             hasChanges = true;
         }
     })

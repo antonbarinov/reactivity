@@ -24,12 +24,12 @@ class ReactiveSubscribe {
     syncMode = false;
     // Currently executed effect
     executedEffect: EnhFunction = null;
-    private __pauseTracking = false;
+    private __trackingPauseDepth = 0;
     // Do not use reactive functions (improve performance for batch updates that doesn't need reactive effects)
     ignoreReactivity = false;
 
     get currentEffect() {
-        if (this.__pauseTracking) return null;
+        if (this.__trackingPauseDepth > 0) return null;
         return this.effects[this.effects.length - 1];
     }
 
@@ -38,16 +38,15 @@ class ReactiveSubscribe {
     }
 
     stop = () => {
-        this.resumeTracking();
         this.effects.pop();
     }
 
     pauseTracking = () => {
-        this.__pauseTracking = true;
+        this.__trackingPauseDepth++;
     }
 
     resumeTracking = () => {
-        this.__pauseTracking = false;
+        if (this.__trackingPauseDepth > 0) this.__trackingPauseDepth--;
     }
 }
 
@@ -170,17 +169,19 @@ function makeSingleReactive(target: object, key: string, value) {
                     reactiveSubscribe.pauseTracking();
                     computedSubscribe.startDependency(reactiveVariable);
 
-                    reactiveVariable.allowComputedSubscribe = true;
-                    reactiveVariable.value = getterFn.call(this);
+                    try {
+                        reactiveVariable.allowComputedSubscribe = true;
+                        reactiveVariable.value = getterFn.call(this);
 
-                    // When value for __subscribedValue was not defined (first time getterFn call) on top call subscribe(reactiveVariable); then define it here
-                    if (effectFn && !computedData.firstExec) {
-                        const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
-                        pair.__subscribedValue = reactiveVariable.value;
+                        // When value for __subscribedValue was not defined (first time getterFn call) on top call subscribe(reactiveVariable); then define it here
+                        if (effectFn && !computedData.firstExec) {
+                            const pair = getPairObj<IPairedEffectFnWithReactiveVariable>(effectFn, reactiveVariable);
+                            pair.__subscribedValue = reactiveVariable.value;
+                        }
+                    } finally {
+                        computedSubscribe.stopDependency();
+                        reactiveSubscribe.resumeTracking();
                     }
-
-                    computedSubscribe.stopDependency();
-                    reactiveSubscribe.resumeTracking();
                     reactiveVariable.forceUpdate = false;
                 }
                 computedData.firstExec = true;
