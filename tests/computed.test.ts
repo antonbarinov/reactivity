@@ -359,4 +359,85 @@ describe('computed', () => {
         assert.deepEqual(result, [false, true, false]);
         assert.deepEqual(result2, [false, true, false]);
     })
+
+    it(`nested getters`, async () => {
+        class Test {
+            counter = 1;
+
+            constructor() {
+                reactive(this);
+            }
+
+            get divByTwo() {
+                return this.counter % 2 === 0;
+            }
+        }
+
+        class Test2 {
+            test = new Test();
+
+            constructor() {
+                reactive(this);
+            }
+
+            get isChanged() {
+                return this.test.divByTwo;
+            }
+        }
+
+        const test = new Test2();
+        const result = [];
+
+        autorun(() => {
+            result.push(test.isChanged);
+        });
+
+        for (let i = 0; i < 5; i++) {
+            test.test.counter++;
+            await reactionsExecuted();
+        }
+
+        assert.deepEqual(result, [false, true, false, true, false, true]);
+    })
+
+    it(`nested getters [sync child]`, async () => {
+        class Test {
+            counter = 1;
+
+            constructor() {
+                reactive(this);
+                markSynchronousReactions(this, 'counter');
+            }
+
+            get divByTwo() {
+                return this.counter % 2 === 0;
+            }
+        }
+
+        class Test2 {
+            test = new Test();
+
+            constructor() {
+                reactive(this);
+            }
+
+            get isChanged() {
+                return this.test.divByTwo;
+            }
+        }
+
+        const test = new Test2();
+        const result = [];
+
+        autorun(() => {
+            result.push(test.isChanged);
+        });
+
+        for (let i = 0; i < 5; i++) {
+            test.test.counter++;
+            await reactionsExecuted();
+        }
+
+        assert.deepEqual(result, [false, true, false, true, false, true]);
+    })
 })
